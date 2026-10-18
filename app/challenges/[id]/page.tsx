@@ -281,6 +281,17 @@ export default function ChallengeDetailPage() {
   >({})
 
   /*
+   * 웹 내부 QR 스캐너
+   */
+  const [qrScannerMissionId, setQrScannerMissionId] = useState<number | null>(
+    null,
+  )
+
+  const [qrScannerStarting, setQrScannerStarting] = useState(false)
+
+  const [qrScannerError, setQrScannerError] = useState('')
+
+  /*
    * Mission 지도 접기 / 펼치기
    */
   const [expandedMaps, setExpandedMaps] = useState<Record<number, boolean>>({})
@@ -679,6 +690,186 @@ export default function ChallengeDetailPage() {
 
     return fallback
   }
+
+  /*
+   * QR 코드 안의 값에서 TripQuest 체크인 경로만 추출한다.
+   *
+   * 운영 주소, localhost 주소처럼 도메인이 달라도
+   * /checkin/[token] 경로만 사용하므로 같은 로그인 탭에서 인증할 수 있다.
+   */
+  function getCheckinPathFromQr(decodedText: string) {
+    const value = decodedText.trim()
+
+    if (!value) {
+      return null
+    }
+
+    try {
+      const url = new URL(value, window.location.origin)
+
+      const match = url.pathname.match(/^\/checkin\/([^/?#]+)\/?$/)
+
+      if (!match?.[1]) {
+        return null
+      }
+
+      return `/checkin/${match[1]}`
+    } catch {
+      return null
+    }
+  }
+
+  function openQrScanner(mission: Mission) {
+    if (!mission.qrActive || !mission.qrAvailable) {
+      setMissionErrors((current) => ({
+        ...current,
+
+        [mission.id]: '현재 사용할 수 있는 Mission QR이 없습니다.',
+      }))
+
+      return
+    }
+
+    setMissionErrors((current) => ({
+      ...current,
+
+      [mission.id]: '',
+    }))
+
+    setQrScannerError('')
+    setQrScannerMissionId(mission.id)
+  }
+
+  function closeQrScanner() {
+    setQrScannerMissionId(null)
+    setQrScannerStarting(false)
+    setQrScannerError('')
+  }
+
+  useEffect(() => {
+    if (qrScannerMissionId === null) {
+      return
+    }
+
+    let disposed = false
+    let handled = false
+    let scanner: import('html5-qrcode').Html5Qrcode | null = null
+
+    async function startScanner() {
+      setQrScannerStarting(true)
+      setQrScannerError('')
+
+      try {
+        const { Html5Qrcode } = await import('html5-qrcode')
+
+        if (disposed) {
+          return
+        }
+
+        scanner = new Html5Qrcode('tripquest-qr-reader')
+
+        await scanner.start(
+          {
+            facingMode: 'environment',
+          },
+          {
+            fps: 10,
+            qrbox: {
+              width: 240,
+              height: 240,
+            },
+          },
+          (decodedText) => {
+            if (handled) {
+              return
+            }
+
+            const checkinPath = getCheckinPathFromQr(decodedText)
+
+            if (!checkinPath) {
+              setQrScannerError(
+                'TripQuest Mission QR이 아닙니다. 현장에 설치된 Mission QR을 화면 안에 맞춰주세요.',
+              )
+
+              return
+            }
+
+            handled = true
+
+            void (async () => {
+              try {
+                await scanner?.stop()
+              } catch {
+                // 이미 중지된 경우는 무시한다.
+              }
+
+              try {
+                scanner?.clear()
+              } catch {
+                // 정리 중 오류는 화면 이동을 막지 않는다.
+              }
+
+              if (disposed) {
+                return
+              }
+
+              setQrScannerMissionId(null)
+              setQrScannerStarting(false)
+              setQrScannerError('')
+
+              /*
+               * 같은 브라우저 탭에서 이동하므로
+               * 기존 sessionStorage 로그인 상태가 그대로 유지된다.
+               */
+              router.push(checkinPath)
+            })()
+          },
+          () => {
+            // 프레임마다 발생하는 QR 미검출 오류는 사용자에게 표시하지 않는다.
+          },
+        )
+
+        if (!disposed) {
+          setQrScannerStarting(false)
+        }
+      } catch (err) {
+        if (disposed) {
+          return
+        }
+
+        setQrScannerStarting(false)
+
+        setQrScannerError(
+          err instanceof Error
+            ? `카메라를 시작하지 못했습니다. ${err.message}`
+            : '카메라를 시작하지 못했습니다. 브라우저의 카메라 권한을 확인해주세요.',
+        )
+      }
+    }
+
+    void startScanner()
+
+    return () => {
+      disposed = true
+
+      const activeScanner = scanner
+
+      if (!activeScanner) {
+        return
+      }
+
+      void activeScanner
+        .stop()
+        .catch(() => undefined)
+        .finally(() => {
+          try {
+            activeScanner.clear()
+          } catch {
+            // 정리 중 오류는 무시한다.
+          }
+        })
+    }
+  }, [qrScannerMissionId, router])
 
   async function handleLocationVerification(mission: Mission) {
     if (!challengeId) {
@@ -1844,9 +2035,23 @@ export default function ChallengeDetailPage() {
                             </p>
 
                             <p className="mt-1 text-xs leading-5 text-slate-500">
-                              관광지에 설치된 QR을 스캔하면 QR 인증 화면으로
-                              이동합니다.
+                              로그인 상태를 유지한 채 TripQuest 안에서 카메라를
+                              열어 현장 QR을 스캔할 수 있습니다.
                             </p>
+
+                            {mission.qrActive && mission.qrAvailable ? (
+                              <button
+                                type="button"
+                                onClick={() => openQrScanner(mission)}
+                                className="mt-4 w-full rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-600 sm:w-auto"
+                              >
+                                📷 QR 스캔하기
+                              </button>
+                            ) : (
+                              <p className="mt-3 text-xs font-semibold text-slate-400">
+                                현재 사용할 수 있는 QR이 없습니다.
+                              </p>
+                            )}
                           </div>
                         )}
 
@@ -1857,9 +2062,24 @@ export default function ChallengeDetailPage() {
                             </p>
 
                             <p className="mt-2 text-sm leading-6 text-violet-700">
-                              관광지에 도착한 뒤 설치된 QR을 스캔해주세요. QR
-                              인증 페이지에서 현재 위치도 함께 확인합니다.
+                              관광지에 도착한 뒤 아래 버튼으로 카메라를 열어
+                              현장 QR을 스캔해주세요. QR 인증 화면에서 현재
+                              위치도 함께 확인합니다.
                             </p>
+
+                            {mission.qrActive && mission.qrAvailable ? (
+                              <button
+                                type="button"
+                                onClick={() => openQrScanner(mission)}
+                                className="mt-4 w-full rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-700 sm:w-auto"
+                              >
+                                📷 QR 스캔하기
+                              </button>
+                            ) : (
+                              <p className="mt-3 text-xs font-semibold text-violet-400">
+                                현재 사용할 수 있는 QR이 없습니다.
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -1878,6 +2098,85 @@ export default function ChallengeDetailPage() {
           )}
         </section>
       </div>
+
+      {qrScannerMissionId !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5">
+              <div>
+                <p className="text-xs font-black tracking-widest text-violet-600">
+                  MISSION QR SCANNER
+                </p>
+
+                <h2 className="mt-1 text-xl font-black text-slate-900">
+                  현장 QR 스캔
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  {
+                    missions.find(
+                      (mission) => mission.id === qrScannerMissionId,
+                    )?.title
+                  }
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeQrScanner}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-600 transition hover:bg-slate-200"
+                aria-label="QR 스캐너 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-5">
+              <div className="overflow-hidden rounded-2xl bg-black p-2">
+                <div
+                  id="tripquest-qr-reader"
+                  className="min-h-72 overflow-hidden rounded-xl bg-black"
+                />
+              </div>
+
+              {qrScannerStarting && (
+                <div className="mt-4 rounded-xl bg-slate-50 p-4 text-center">
+                  <p className="text-sm font-semibold text-slate-600">
+                    카메라를 준비하는 중...
+                  </p>
+                </div>
+              )}
+
+              {qrScannerError && (
+                <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm font-semibold leading-6 text-red-700">
+                    {qrScannerError}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 rounded-xl bg-violet-50 p-4">
+                <p className="text-sm font-bold text-violet-700">
+                  QR을 사각형 안에 맞춰주세요.
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-violet-600">
+                  QR을 인식하면 같은 로그인 화면에서 Mission 인증 페이지로 자동
+                  이동합니다.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeQrScanner}
+                className="mt-4 w-full rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-300"
+              >
+                스캔 취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
