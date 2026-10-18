@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { API_BASE_URL } from './lib/api'
 
 type Challenge = {
   id: number
@@ -24,7 +25,7 @@ type ChallengesResponse = {
 
 async function getChallenges(): Promise<Challenge[]> {
   try {
-    const response = await fetch('http://localhost:3001/challenges', {
+    const response = await fetch(`${API_BASE_URL}/challenges`, {
       cache: 'no-store',
     })
 

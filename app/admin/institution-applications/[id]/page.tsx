@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { API_BASE_URL } from '../../../lib/api'
+
 type User = {
   id: number
   email: string
@@ -187,7 +189,7 @@ export default function InstitutionApplicationDetailPage() {
         /*
          * 관리자 권한 확인
          */
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers,
         })
 
@@ -223,7 +225,7 @@ export default function InstitutionApplicationDetailPage() {
          * 여기서 proofs[]도 함께 받는다.
          */
         const response = await fetch(
-          `http://localhost:3001/institution-applications/admin/${applicationId}`,
+          `${API_BASE_URL}/institution-applications/admin/${applicationId}`,
           {
             headers,
           },
@@ -313,7 +315,7 @@ export default function InstitutionApplicationDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/institution-applications/admin/${application.id}/proofs/${proofId}/url`,
+        `${API_BASE_URL}/institution-applications/admin/${application.id}/proofs/${proofId}/url`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -409,7 +411,7 @@ export default function InstitutionApplicationDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/institution-applications/admin/${application.id}/proof-url`,
+        `${API_BASE_URL}/institution-applications/admin/${application.id}/proof-url`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -474,7 +476,7 @@ export default function InstitutionApplicationDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/institution-applications/${application.id}/approve`,
+        `${API_BASE_URL}/institution-applications/${application.id}/approve`,
         {
           method: 'POST',
 
@@ -539,7 +541,7 @@ export default function InstitutionApplicationDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/institution-applications/${application.id}/reject`,
+        `${API_BASE_URL}/institution-applications/${application.id}/reject`,
         {
           method: 'POST',
 

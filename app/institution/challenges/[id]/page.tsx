@@ -4,6 +4,7 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { API_BASE_URL } from '../../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
 type MissionStatus = 'ACTIVE' | 'INACTIVE'
@@ -61,8 +62,6 @@ type QrModalState = {
   qrActive: boolean
   missionStatus: MissionStatus
 }
-
-const API_BASE = 'http://localhost:3001'
 
 function responseMessage(data: unknown, fallback: string) {
   if (typeof data === 'object' && data !== null && 'message' in data) {
@@ -301,7 +300,7 @@ export default function InstitutionChallengeDetailPage() {
 
     try {
       const response = await fetch(
-        `${API_BASE}/challenges/institution/${challengeId}`,
+        `${API_BASE_URL}/challenges/institution/${challengeId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -365,7 +364,7 @@ export default function InstitutionChallengeDetailPage() {
 
     if (!token) return null
 
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -797,12 +796,15 @@ export default function InstitutionChallengeDetailPage() {
     setQrError('')
 
     try {
-      const response = await fetch(`${API_BASE}/missions/${mission.id}/qr`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${API_BASE_URL}/missions/${mission.id}/qr`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
 
       if (response.status === 401) {
         handleUnauthorized()

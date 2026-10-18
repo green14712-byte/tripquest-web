@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '../lib/api'
 
 type LoginResponse = {
   accessToken?: string
@@ -35,7 +36,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
 
         headers: {

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
+import { API_BASE_URL } from '../lib/api'
 
 type User = {
   id: number
@@ -105,7 +106,7 @@ export default function MyPage() {
          * 호출하지 않아야 하기 때문에
          * Promise.all로 동시에 호출하지 않는다.
          */
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -149,7 +150,7 @@ export default function MyPage() {
          * 기관 가입 신청 이력을 조회한다.
          */
         const applicationResponse = await fetch(
-          'http://localhost:3001/institution-applications/me',
+          `${API_BASE_URL}/institution-applications/me`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -252,7 +253,7 @@ export default function MyPage() {
     setWithdrawLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/auth/withdraw', {
+      const response = await fetch(`${API_BASE_URL}/auth/withdraw`, {
         method: 'POST',
 
         headers: {

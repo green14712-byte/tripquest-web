@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
+import { API_BASE_URL } from '../../lib/api'
 
 type ChallengeStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ENDED' | 'ARCHIVED'
 
@@ -51,7 +52,7 @@ export default function InstitutionChallengesPage() {
         /*
          * 현재 로그인한 기관 계정 확인
          */
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -83,7 +84,7 @@ export default function InstitutionChallengesPage() {
          * Challenge 전체 조회
          */
         const response = await fetch(
-          'http://localhost:3001/challenges/institution/me',
+          `${API_BASE_URL}/challenges/institution/me`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,

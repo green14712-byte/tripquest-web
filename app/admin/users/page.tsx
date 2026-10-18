@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 
+import { API_BASE_URL } from '../../lib/api'
+
 type UserRole = 'USER' | 'INSTITUTION' | 'ADMIN'
 type AccountStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED'
 
@@ -160,7 +162,7 @@ export default function AdminUsersPage() {
         /*
          * 관리자 본인 확인
          */
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -214,8 +216,8 @@ export default function AdminUsersPage() {
         const queryString = params.toString()
 
         const url = queryString
-          ? `http://localhost:3001/auth/admin/users?${queryString}`
-          : 'http://localhost:3001/auth/admin/users'
+          ? `${API_BASE_URL}/auth/admin/users?${queryString}`
+          : `${API_BASE_URL}/auth/admin/users`
 
         const response = await fetch(url, {
           headers: {
@@ -340,7 +342,7 @@ export default function AdminUsersPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/auth/admin/users/${user.id}/promote-admin`,
+        `${API_BASE_URL}/auth/admin/users/${user.id}/promote-admin`,
         {
           method: 'POST',
 
@@ -426,7 +428,7 @@ export default function AdminUsersPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/auth/admin/users/${user.id}/suspend`,
+        `${API_BASE_URL}/auth/admin/users/${user.id}/suspend`,
         {
           method: 'POST',
 
@@ -500,7 +502,7 @@ export default function AdminUsersPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/auth/admin/users/${user.id}/activate`,
+        `${API_BASE_URL}/auth/admin/users/${user.id}/activate`,
         {
           method: 'POST',
 
@@ -578,7 +580,7 @@ export default function AdminUsersPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/auth/admin/users/${user.id}/delete`,
+        `${API_BASE_URL}/auth/admin/users/${user.id}/delete`,
         {
           method: 'POST',
 

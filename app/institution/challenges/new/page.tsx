@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { API_BASE_URL } from '../../../lib/api'
 
 const MAX_COVER_IMAGE_SIZE = 10 * 1024 * 1024
 
@@ -57,7 +58,7 @@ export default function NewChallengePage() {
       }
 
       try {
-        const response = await fetch('http://localhost:3001/auth/me', {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -302,7 +303,7 @@ export default function NewChallengePage() {
         formData.append('coverPositionY', String(coverPositionY))
       }
 
-      const response = await fetch('http://localhost:3001/challenges', {
+      const response = await fetch(`${API_BASE_URL}/challenges`, {
         method: 'POST',
 
         /*

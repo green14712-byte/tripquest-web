@@ -12,6 +12,7 @@ import {
 import QRCode from 'qrcode'
 
 import MissionLocationMap from '../../../../../components/mission-location-map'
+import { API_BASE_URL } from '../../../../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
 
@@ -224,7 +225,7 @@ export default function NewMissionPage() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/challenges/institution/${challengeId}`,
+          `${API_BASE_URL}/challenges/institution/${challengeId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -380,7 +381,7 @@ export default function NewMissionPage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}/missions`,
+        `${API_BASE_URL}/challenges/${challengeId}/missions`,
         {
           method: 'POST',
 

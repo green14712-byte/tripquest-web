@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import { API_BASE_URL } from '../../lib/api'
+
 type UserRole = 'USER' | 'INSTITUTION' | 'ADMIN'
 
 type AuthUser = {
@@ -74,7 +76,7 @@ export default function MissionQrCheckinPage() {
       }
 
       try {
-        const response = await fetch('http://localhost:3001/auth/me', {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -257,7 +259,7 @@ export default function MissionQrCheckinPage() {
       }
 
       const response = await fetch(
-        'http://localhost:3001/mission-completions/verify',
+        `${API_BASE_URL}/mission-completions/verify`,
         {
           method: 'POST',
 

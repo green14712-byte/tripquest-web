@@ -12,6 +12,7 @@ import {
 import { useParams, useRouter } from 'next/navigation'
 
 import MissionLocationMap from '../../../../../../components/mission-location-map'
+import { API_BASE_URL } from '../../../../../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
 
@@ -174,7 +175,7 @@ export default function EditMissionPage() {
   ) {
     try {
       const response = await fetch(
-        `http://localhost:3001/missions/${targetMissionId}/photo`,
+        `${API_BASE_URL}/missions/${targetMissionId}/photo`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -275,7 +276,7 @@ export default function EditMissionPage() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/challenges/institution/${challengeId}`,
+          `${API_BASE_URL}/challenges/institution/${challengeId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -524,23 +525,20 @@ export default function EditMissionPage() {
     setPhotoMessage('')
 
     try {
-      const response = await fetch(
-        `http://localhost:3001/missions/${missionId}`,
-        {
-          method: 'PATCH',
+      const response = await fetch(`${API_BASE_URL}/missions/${missionId}`, {
+        method: 'PATCH',
 
-          headers: {
-            'Content-Type': 'application/json',
+        headers: {
+          'Content-Type': 'application/json',
 
-            Authorization: `Bearer ${accessToken}`,
-          },
-
-          body: JSON.stringify({
-            photoPositionX,
-            photoPositionY,
-          }),
+          Authorization: `Bearer ${accessToken}`,
         },
-      )
+
+        body: JSON.stringify({
+          photoPositionX,
+          photoPositionY,
+        }),
+      })
 
       if (response.status === 401) {
         sessionStorage.removeItem('accessToken')
@@ -624,7 +622,7 @@ export default function EditMissionPage() {
        * 1. 기존 대표사진 등록 / 교체
        */
       const response = await fetch(
-        `http://localhost:3001/missions/${missionId}/photo`,
+        `${API_BASE_URL}/missions/${missionId}/photo`,
         {
           method: 'POST',
 
@@ -668,7 +666,7 @@ export default function EditMissionPage() {
        * 2. 새 대표사진의 초점 위치 저장
        */
       const positionResponse = await fetch(
-        `http://localhost:3001/missions/${missionId}`,
+        `${API_BASE_URL}/missions/${missionId}`,
         {
           method: 'PATCH',
 
@@ -780,7 +778,7 @@ export default function EditMissionPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/missions/${missionId}/photo`,
+        `${API_BASE_URL}/missions/${missionId}/photo`,
         {
           method: 'DELETE',
 
@@ -936,20 +934,17 @@ export default function EditMissionPage() {
         body.qrLocationNote = qrLocationNote.trim()
       }
 
-      const response = await fetch(
-        `http://localhost:3001/missions/${missionId}`,
-        {
-          method: 'PATCH',
+      const response = await fetch(`${API_BASE_URL}/missions/${missionId}`, {
+        method: 'PATCH',
 
-          headers: {
-            'Content-Type': 'application/json',
+        headers: {
+          'Content-Type': 'application/json',
 
-            Authorization: `Bearer ${accessToken}`,
-          },
-
-          body: JSON.stringify(body),
+          Authorization: `Bearer ${accessToken}`,
         },
-      )
+
+        body: JSON.stringify(body),
+      })
 
       if (response.status === 401) {
         sessionStorage.removeItem('accessToken')

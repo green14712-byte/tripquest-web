@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { API_BASE_URL } from '../../../../lib/api'
 
 const MAX_COVER_IMAGE_SIZE = 10 * 1024 * 1024
 
@@ -112,7 +113,7 @@ export default function EditInstitutionChallengePage() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/challenges/institution/${challengeId}`,
+          `${API_BASE_URL}/challenges/institution/${challengeId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -402,7 +403,7 @@ export default function EditInstitutionChallengePage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}`,
+        `${API_BASE_URL}/challenges/${challengeId}`,
         {
           method: 'PATCH',
 
@@ -505,7 +506,7 @@ export default function EditInstitutionChallengePage() {
        * 기존 대표사진 업로드/교체 API
        */
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}/cover`,
+        `${API_BASE_URL}/challenges/${challengeId}/cover`,
         {
           method: 'POST',
 
@@ -562,7 +563,7 @@ export default function EditInstitutionChallengePage() {
        * 초점 위치도 이어서 저장한다.
        */
       const positionResponse = await fetch(
-        `http://localhost:3001/challenges/${challengeId}`,
+        `${API_BASE_URL}/challenges/${challengeId}`,
         {
           method: 'PATCH',
 
@@ -677,7 +678,7 @@ export default function EditInstitutionChallengePage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}/cover`,
+        `${API_BASE_URL}/challenges/${challengeId}/cover`,
         {
           method: 'DELETE',
 
@@ -832,7 +833,7 @@ export default function EditInstitutionChallengePage() {
       }
 
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}`,
+        `${API_BASE_URL}/challenges/${challengeId}`,
         {
           method: 'PATCH',
 

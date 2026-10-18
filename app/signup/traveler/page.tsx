@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '../../lib/api'
 
 type ApiResponse = {
   message?: string | string[]
@@ -47,20 +48,17 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(
-        'http://localhost:3001/auth/email/send-code',
-        {
-          method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/auth/email/send-code`, {
+        method: 'POST',
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email,
-          }),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+
+        body: JSON.stringify({
+          email,
+        }),
+      })
 
       const data = (await response.json()) as ApiResponse
 
@@ -86,21 +84,18 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(
-        'http://localhost:3001/auth/email/verify-code',
-        {
-          method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/auth/email/verify-code`, {
+        method: 'POST',
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email,
-            code,
-          }),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+
+        body: JSON.stringify({
+          email,
+          code,
+        }),
+      })
 
       const data = (await response.json()) as ApiResponse
 
@@ -154,7 +149,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
 
         headers: {

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 
 import MissionLocationMap from '../../components/mission-location-map'
+import { API_BASE_URL } from '../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
 
@@ -323,7 +324,7 @@ export default function ChallengeDetailPage() {
 
           try {
             const response = await fetch(
-              `http://localhost:3001/mission-completions/${missionId}/photo`,
+              `${API_BASE_URL}/mission-completions/${missionId}/photo`,
               {
                 headers: {
                   Authorization: `Bearer ${accessToken}`,
@@ -388,7 +389,7 @@ export default function ChallengeDetailPage() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/challenges/${id}/progress`,
+          `${API_BASE_URL}/challenges/${id}/progress`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -446,7 +447,7 @@ export default function ChallengeDetailPage() {
          * 공개 Challenge 상세 조회
          */
         const challengeResponse = await fetch(
-          `http://localhost:3001/challenges/${challengeId}`,
+          `${API_BASE_URL}/challenges/${challengeId}`,
           {
             cache: 'no-store',
           },
@@ -516,7 +517,7 @@ export default function ChallengeDetailPage() {
           return
         }
 
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -573,7 +574,7 @@ export default function ChallengeDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/challenges/${challengeId}/join`,
+        `${API_BASE_URL}/challenges/${challengeId}/join`,
         {
           method: 'POST',
 
@@ -760,7 +761,7 @@ export default function ChallengeDetailPage() {
       const accuracy = position.coords.accuracy
 
       const response = await fetch(
-        'http://localhost:3001/mission-completions/verify',
+        `${API_BASE_URL}/mission-completions/verify`,
         {
           method: 'POST',
 
@@ -959,7 +960,7 @@ export default function ChallengeDetailPage() {
       formData.append('photoImage', photoState.selectedFile)
 
       const response = await fetch(
-        `http://localhost:3001/mission-completions/${missionId}/photo`,
+        `${API_BASE_URL}/mission-completions/${missionId}/photo`,
         {
           method: 'POST',
 
@@ -1057,7 +1058,7 @@ export default function ChallengeDetailPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/mission-completions/${missionId}/photo`,
+        `${API_BASE_URL}/mission-completions/${missionId}/photo`,
         {
           method: 'DELETE',
 

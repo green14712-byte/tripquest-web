@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 
+import { API_BASE_URL } from '../../lib/api'
+
 type User = {
   id: number
   email: string
@@ -111,7 +113,7 @@ export default function InstitutionApplicationsAdminPage() {
         }
 
         // 현재 로그인 사용자 확인
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers,
         })
 
@@ -142,7 +144,7 @@ export default function InstitutionApplicationsAdminPage() {
 
         // 전체 기관 신청 이력 조회
         const applicationResponse = await fetch(
-          'http://localhost:3001/institution-applications/admin/all',
+          `${API_BASE_URL}/institution-applications/admin/all`,
           {
             headers,
           },

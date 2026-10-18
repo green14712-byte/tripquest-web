@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { FormEvent, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { API_BASE_URL } from '../../lib/api'
 
 type UserRole = 'USER' | 'INSTITUTION' | 'ADMIN'
 type AccountStatus = 'ACTIVE' | 'SUSPENDED' | 'DELETED'
@@ -193,7 +194,7 @@ export default function InstitutionSignupPage() {
       }
 
       try {
-        const meResponse = await fetch('http://localhost:3001/auth/me', {
+        const meResponse = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -271,7 +272,7 @@ export default function InstitutionSignupPage() {
          * 기존 기관 신청 이력 확인
          */
         const applicationResponse = await fetch(
-          'http://localhost:3001/institution-applications/me',
+          `${API_BASE_URL}/institution-applications/me`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -389,20 +390,17 @@ export default function InstitutionSignupPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(
-        'http://localhost:3001/auth/email/send-code',
-        {
-          method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/auth/email/send-code`, {
+        method: 'POST',
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email,
-          }),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+
+        body: JSON.stringify({
+          email,
+        }),
+      })
 
       const data = (await response.json()) as ApiResponse
 
@@ -434,21 +432,18 @@ export default function InstitutionSignupPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(
-        'http://localhost:3001/auth/email/verify-code',
-        {
-          method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/auth/email/verify-code`, {
+        method: 'POST',
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email,
-            code,
-          }),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+
+        body: JSON.stringify({
+          email,
+          code,
+        }),
+      })
 
       const data = (await response.json()) as ApiResponse
 
@@ -514,26 +509,23 @@ export default function InstitutionSignupPage() {
     setLoading(true)
 
     try {
-      const registerResponse = await fetch(
-        'http://localhost:3001/auth/register',
-        {
-          method: 'POST',
+      const registerResponse = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
 
-          headers: {
-            'Content-Type': 'application/json',
-          },
-
-          body: JSON.stringify({
-            email,
-
-            verificationToken,
-
-            password,
-
-            nickname: nickname.trim(),
-          }),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+
+        body: JSON.stringify({
+          email,
+
+          verificationToken,
+
+          password,
+
+          nickname: nickname.trim(),
+        }),
+      })
 
       const registerData = (await registerResponse.json()) as ApiResponse
 
@@ -543,7 +535,7 @@ export default function InstitutionSignupPage() {
         return
       }
 
-      const loginResponse = await fetch('http://localhost:3001/auth/login', {
+      const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
 
         headers: {
@@ -684,7 +676,7 @@ export default function InstitutionSignupPage() {
       formData.append('proofOriginalName', file.name)
 
       const response = await fetch(
-        `http://localhost:3001/institution-applications/${id}/proofs`,
+        `${API_BASE_URL}/institution-applications/${id}/proofs`,
         {
           method: 'POST',
 
@@ -821,7 +813,7 @@ export default function InstitutionSignupPage() {
         formData.append('proofOriginalName', proofFiles[0].name)
 
         const response = await fetch(
-          'http://localhost:3001/institution-applications',
+          `${API_BASE_URL}/institution-applications`,
           {
             method: 'POST',
 
