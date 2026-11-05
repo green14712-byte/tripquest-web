@@ -1,6 +1,56 @@
+'use client'
+
 import Link from 'next/link'
+import { useState } from 'react'
+import { supabase } from '../lib/supabase'
 
 export default function SignupTypePage() {
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState('')
+
+  /*
+   * Google 간편가입 / 로그인
+   *
+   * 신규 Google 계정
+   * → USER 계정 생성 후 로그인
+   *
+   * 기존 Google 계정
+   * → 기존 계정으로 로그인
+   *
+   * 같은 이메일의 일반 계정이 이미 존재하면
+   * → 자동 연결하지 않고 My 페이지에서 직접 연결하도록 안내
+   */
+  async function handleGoogleLogin() {
+    setGoogleError('')
+    setGoogleLoading(true)
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback`
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+
+        options: {
+          redirectTo,
+
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      })
+
+      if (error) {
+        setGoogleError(
+          error.message || 'Google 회원가입을 시작하지 못했습니다.',
+        )
+      }
+    } catch {
+      setGoogleError('Google 회원가입 처리 중 오류가 발생했습니다.')
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
   return (
     <main className="flex flex-1 items-center justify-center bg-slate-50 px-6 py-12">
       <div className="w-full max-w-3xl">
@@ -74,18 +124,45 @@ export default function SignupTypePage() {
             </p>
           </div>
 
+          {/* Google 간편가입 */}
           <div className="mt-8">
+            <div className="relative mb-6 flex items-center">
+              <div className="grow border-t border-slate-200" />
+
+              <span className="mx-4 shrink-0 text-xs font-medium text-slate-400">
+                또는
+              </span>
+
+              <div className="grow border-t border-slate-200" />
+            </div>
+
             <button
               type="button"
-              disabled
-              className="w-full cursor-not-allowed rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 font-semibold text-slate-400"
+              onClick={() => void handleGoogleLogin()}
+              disabled={googleLoading}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Google로 계속하기 · 준비 중
+              <span className="flex h-6 w-6 items-center justify-center rounded-full text-sm font-black text-slate-700">
+                G
+              </span>
+
+              {googleLoading ? 'Google 연결 중...' : 'Google로 계속하기'}
             </button>
 
-            <p className="mt-2 text-center text-xs text-slate-500">
-              Google 회원가입과 로그인은 이후 연결할 예정입니다.
+            <p className="mt-3 text-center text-xs leading-5 text-slate-500">
+              Google로 처음 이용하는 경우 일반 USER 계정이 생성됩니다.
             </p>
+
+            <p className="mt-1 text-center text-xs leading-5 text-slate-500">
+              기관 담당자는 Google로 가입한 뒤 기관 가입 신청을 진행할 수
+              있습니다.
+            </p>
+
+            {googleError && (
+              <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                {googleError}
+              </div>
+            )}
           </div>
 
           <div className="mt-8 border-t border-slate-200 pt-6 text-center">

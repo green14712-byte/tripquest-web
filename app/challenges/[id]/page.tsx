@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 
+import ChallengeSummaryMap from '../../components/challenge-summary-map'
 import MissionLocationMap from '../../components/mission-location-map'
 import { API_BASE_URL } from '../../lib/api'
 
@@ -303,6 +304,12 @@ export default function ChallengeDetailPage() {
     Record<number, CompletionPhotoState>
   >({})
 
+  /*
+   * 등록된 완료사진 보기 / 관리 모달
+   */
+  const [completionPhotoModalMissionId, setCompletionPhotoModalMissionId] =
+    useState<number | null>(null)
+
   const updateCompletionPhotoState = useCallback(
     (missionId: number, patch: Partial<CompletionPhotoState>) => {
       setCompletionPhotos((current) => ({
@@ -428,15 +435,9 @@ export default function ChallengeDetailPage() {
 
         setProgress(data)
 
-        /*
-         * Mission 완료 목록을 확인한 뒤
-         * 완료사진도 함께 불러온다.
-         */
         await loadCompletionPhotos(accessToken, data.completedMissionIds ?? [])
       } catch {
-        /*
-         * 공개 Challenge 화면 자체는 유지한다.
-         */
+        // 공개 Challenge 화면 자체는 유지한다.
       } finally {
         setProgressLoading(false)
       }
@@ -454,9 +455,6 @@ export default function ChallengeDetailPage() {
       }
 
       try {
-        /*
-         * 공개 Challenge 상세 조회
-         */
         const challengeResponse = await fetch(
           `${API_BASE_URL}/challenges/${challengeId}`,
           {
@@ -519,9 +517,6 @@ export default function ChallengeDetailPage() {
             : [],
         )
 
-        /*
-         * 로그인 상태 확인
-         */
         const accessToken = sessionStorage.getItem('accessToken')
 
         if (!accessToken) {
@@ -551,9 +546,6 @@ export default function ChallengeDetailPage() {
 
         setCurrentUser(user)
 
-        /*
-         * USER일 때만 진행률 조회
-         */
         if (user.role === 'USER') {
           await loadProgress(accessToken, challengeId)
         }
@@ -691,12 +683,6 @@ export default function ChallengeDetailPage() {
     return fallback
   }
 
-  /*
-   * QR 코드 안의 값에서 TripQuest 체크인 경로만 추출한다.
-   *
-   * 운영 주소, localhost 주소처럼 도메인이 달라도
-   * /checkin/[token] 경로만 사용하므로 같은 로그인 탭에서 인증할 수 있다.
-   */
   function getCheckinPathFromQr(decodedText: string) {
     const value = decodedText.trim()
 
@@ -817,10 +803,6 @@ export default function ChallengeDetailPage() {
               setQrScannerStarting(false)
               setQrScannerError('')
 
-              /*
-               * 같은 브라우저 탭에서 이동하므로
-               * 기존 sessionStorage 로그인 상태가 그대로 유지된다.
-               */
               router.push(checkinPath)
             })()
           },
@@ -907,10 +889,6 @@ export default function ChallengeDetailPage() {
       return
     }
 
-    /*
-     * LOCATION_AND_QR은
-     * 현재 위치만으로 인증할 수 없다.
-     */
     if (mission.verificationMode === 'LOCATION_AND_QR') {
       setMissionErrors((current) => ({
         ...current,
@@ -1006,9 +984,6 @@ export default function ChallengeDetailPage() {
         [mission.id]: successMessage,
       }))
 
-      /*
-       * 인증 성공 후 진행률과 완료사진 상태를 다시 조회한다.
-       */
       await loadProgress(accessToken, challengeId)
     } catch (err) {
       let message: string
@@ -1034,18 +1009,12 @@ export default function ChallengeDetailPage() {
     }
   }
 
-  /*
-   * 완료사진 선택
-   */
   function handleCompletionPhotoSelect(
     missionId: number,
     event: ChangeEvent<HTMLInputElement>,
   ) {
     const file = event.target.files?.[0]
 
-    /*
-     * 같은 파일을 다시 선택할 수 있도록 초기화
-     */
     event.target.value = ''
 
     if (!file) {
@@ -1096,9 +1065,6 @@ export default function ChallengeDetailPage() {
     })
   }
 
-  /*
-   * 선택한 완료사진 취소
-   */
   function cancelCompletionPhotoSelection(missionId: number) {
     const previewUrl = completionPhotos[missionId]?.previewUrl
 
@@ -1115,9 +1081,6 @@ export default function ChallengeDetailPage() {
     })
   }
 
-  /*
-   * 완료사진 등록 / 교체
-   */
   async function handleCompletionPhotoUpload(missionId: number) {
     const photoState =
       completionPhotos[missionId] ?? createEmptyCompletionPhotoState()
@@ -1202,10 +1165,6 @@ export default function ChallengeDetailPage() {
             : 'Mission 완료사진이 등록되었습니다.',
       })
 
-      /*
-       * Signed URL 생성이 일시적으로 실패했을 경우
-       * GET으로 한 번 더 최신 상태를 조회한다.
-       */
       if (!data?.photoImageUrl) {
         await loadCompletionPhotos(accessToken, [missionId])
       }
@@ -1221,9 +1180,6 @@ export default function ChallengeDetailPage() {
     }
   }
 
-  /*
-   * 완료사진 삭제
-   */
   async function handleCompletionPhotoDelete(missionId: number) {
     const confirmed = window.confirm(
       '등록한 Mission 완료사진을 삭제하시겠습니까?\nMission 완료 기록은 그대로 유지됩니다.',
@@ -1300,6 +1256,10 @@ export default function ChallengeDetailPage() {
             ? data.message
             : 'Mission 완료사진이 삭제되었습니다.',
       })
+
+      setCompletionPhotoModalMissionId((current) =>
+        current === missionId ? null : current,
+      )
     } catch (err) {
       updateCompletionPhotoState(missionId, {
         deleting: false,
@@ -1389,6 +1349,23 @@ export default function ChallengeDetailPage() {
     )
   }
 
+  const completionPhotoModalMission =
+    completionPhotoModalMissionId === null
+      ? null
+      : (missions.find(
+          (mission) => mission.id === completionPhotoModalMissionId,
+        ) ?? null)
+
+  const completionPhotoModalState = completionPhotoModalMission
+    ? (completionPhotos[completionPhotoModalMission.id] ??
+      createEmptyCompletionPhotoState())
+    : null
+
+  const completionPhotoModalImage =
+    completionPhotoModalState?.previewUrl ??
+    completionPhotoModalState?.photoImageUrl ??
+    null
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
@@ -1464,7 +1441,7 @@ export default function ChallengeDetailPage() {
           </>
         )}
 
-        <div className="relative mx-auto flex min-h-105 max-w-6xl items-end px-4 py-10 sm:px-6 sm:py-14">
+        <div className="relative mx-auto flex min-h-105 max-w-6xl flex-col justify-end px-4 py-10 sm:px-6 sm:py-14 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           <div className="max-w-3xl">
             <div className="mb-5 flex flex-wrap gap-2">
               <span className="rounded-full border border-white/20 bg-black/20 px-3 py-1.5 text-xs font-bold backdrop-blur">
@@ -1492,161 +1469,219 @@ export default function ChallengeDetailPage() {
               <span>종료 {formatDate(challenge.endAt)}</span>
             </div>
           </div>
-        </div>
-      </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        {/* 참여 / 진행률 */}
-        <section className="mb-12">
-          {!currentUser ? (
-            <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm sm:p-8">
-              <div className="max-w-2xl">
-                <p className="text-sm font-bold text-sky-600">
-                  여행을 시작해보세요
-                </p>
-
-                <h2 className="mt-2 text-2xl font-black text-slate-900">
-                  Challenge에 참여하려면 로그인이 필요합니다.
-                </h2>
-
-                <p className="mt-3 leading-7 text-slate-600">
-                  여행자 계정으로 로그인하면 Mission 진행 상황을 기록하고
-                  현장에서 인증할 수 있습니다.
-                </p>
-
-                <Link
-                  href="/login"
-                  className="mt-6 inline-flex rounded-xl bg-sky-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-sky-700"
-                >
-                  로그인하고 참여하기
-                </Link>
-              </div>
-            </div>
-          ) : currentUser.role !== 'USER' ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-xl font-black text-slate-900">
+          <div className="mt-8 w-full lg:mt-0 lg:w-auto lg:min-w-60">
+            {!currentUser ? (
+              <Link
+                href="/login"
+                className="flex w-full items-center justify-center rounded-2xl bg-sky-500 px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-sky-400 lg:w-auto"
+              >
+                로그인하고 참여하기
+              </Link>
+            ) : currentUser.role !== 'USER' ? (
+              <div className="rounded-2xl border border-white/20 bg-black/30 px-5 py-3.5 text-center text-sm font-bold text-white backdrop-blur">
                 여행자 전용 Challenge
-              </h2>
-
-              <p className="mt-2 text-slate-600">
-                Challenge 참여와 Mission 수행은 여행자 계정에서 사용할 수
-                있습니다.
-              </p>
-            </div>
-          ) : progressLoading && !progress ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-              <p className="font-semibold text-slate-500">
-                참여 상태를 확인하는 중...
-              </p>
-            </div>
-          ) : progress?.joined ? (
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="p-6 sm:p-8">
-                <div className="flex flex-wrap items-end justify-between gap-5">
-                  <div>
-                    <p className="text-sm font-bold text-emerald-600">
-                      여행 진행도
-                    </p>
-
-                    <div className="mt-2 flex items-end gap-3">
-                      <p className="text-3xl font-black text-slate-900 sm:text-4xl">
-                        {progress.completedMissionCount}
-                        <span className="text-lg font-bold text-slate-400">
-                          {' '}
-                          / {progress.totalMissionCount}
-                        </span>
-                      </p>
-
-                      <p className="pb-1 text-sm font-bold text-slate-500">
-                        Mission 완료
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-4xl font-black text-emerald-600">
-                      {progress.progressPercent}%
-                    </p>
-
-                    {progress.completed && (
-                      <p className="mt-1 text-sm font-bold text-emerald-600">
-                        🎉 Challenge 완료
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{
-                      width: `${Math.min(
-                        100,
-                        Math.max(0, progress.progressPercent),
-                      )}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
-                  <p className="text-slate-500">
-                    참여일 {formatDateTime(progress.joinedAt)}
-                  </p>
-
-                  {!progress.completed && (
-                    <p className="font-semibold text-slate-600">
-                      다음 Mission을 방문해보세요.
-                    </p>
-                  )}
-                </div>
-
-                {progress.completed && (
-                  <div className="mt-6 rounded-2xl bg-emerald-50 p-4">
-                    <p className="font-bold text-emerald-700">
-                      모든 Mission을 완료했습니다.
-                    </p>
-
-                    <p className="mt-1 text-sm leading-6 text-emerald-700">
-                      완료한 Mission에 여행 사진을 남겨보세요.
-                    </p>
-                  </div>
-                )}
               </div>
-            </div>
-          ) : (
-            <div className="rounded-3xl border border-sky-100 bg-white p-6 shadow-sm sm:p-8">
-              <p className="text-sm font-bold text-sky-600">
-                아직 참여하지 않았습니다
-              </p>
+            ) : progressLoading && !progress ? (
+              <div className="rounded-2xl border border-white/20 bg-black/30 px-5 py-3.5 text-center text-sm font-bold text-white/80 backdrop-blur">
+                참여 상태 확인 중...
+              </div>
+            ) : progress?.joined ? (
+              <div className="rounded-2xl border border-emerald-300/40 bg-emerald-500/85 px-5 py-3.5 text-center shadow-lg shadow-black/20 backdrop-blur">
+                <p className="text-xs font-bold text-white/80">
+                  {progress.completed ? 'Challenge 완료' : '참여 중'}
+                </p>
 
-              <h2 className="mt-2 text-2xl font-black text-slate-900">
-                이 여행을 시작하시겠어요?
-              </h2>
-
-              <p className="mt-3 max-w-2xl leading-7 text-slate-600">
-                참여하면 Mission 완료 현황이 저장되고 현장 인증 기능을 사용할 수
-                있습니다.
-              </p>
-
-              {joinError && (
-                <div className="mt-5 rounded-xl bg-red-50 p-4">
-                  <p className="text-sm font-semibold text-red-700">
-                    {joinError}
-                  </p>
-                </div>
-              )}
-
+                <p className="mt-1 text-lg font-black text-white">
+                  {progress.completedMissionCount} /{' '}
+                  {progress.totalMissionCount} Mission
+                  {progress.completed ? ' ✓' : ''}
+                </p>
+              </div>
+            ) : (
               <button
                 type="button"
                 onClick={handleJoin}
                 disabled={joining}
-                className="mt-6 rounded-xl bg-sky-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="w-full rounded-2xl bg-sky-500 px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-black/20 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-400 lg:w-auto"
               >
                 {joining ? '참여 처리 중...' : 'Challenge 참여하기'}
               </button>
-            </div>
-          )}
+            )}
+
+            {joinError && (
+              <div className="mt-3 rounded-xl border border-red-200/30 bg-red-950/70 px-4 py-3 text-xs font-semibold leading-5 text-red-100 backdrop-blur">
+                {joinError}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+        {/* Challenge 요약 지도 */}
+        <section className="mb-10">
+          <div className="mb-6">
+            <p className="text-sm font-bold text-sky-600">ROUTE OVERVIEW</p>
+
+            <h2 className="mt-1 text-3xl font-black text-slate-900">
+              챌린지 요약 지도
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base">
+              전체 Mission 위치와 기관이 설정한 추천 이동 흐름을 한눈에 확인할
+              수 있습니다. 번호는 추천 순서이며 원하는 Mission부터 자유롭게
+              수행할 수 있습니다.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <ChallengeSummaryMap
+              missions={missions}
+              completedMissionIds={progress?.completedMissionIds ?? []}
+            />
+
+            <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-bold text-sky-600">한눈에 보기</p>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-bold text-slate-400">총 Mission</p>
+
+                  <p className="mt-1 text-2xl font-black text-slate-900">
+                    {missions.length}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-slate-50 p-4">
+                  <p className="text-xs font-bold text-slate-400">수행 방식</p>
+
+                  <p className="mt-1 text-sm font-black text-slate-900">
+                    자유 순서
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-black text-slate-900">추천 이동 순서</p>
+
+                  <span className="text-xs font-bold text-slate-400">
+                    기관 설정 기준
+                  </span>
+                </div>
+
+                {missions.length === 0 ? (
+                  <p className="mt-4 text-sm text-slate-500">
+                    현재 공개된 Mission이 없습니다.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {missions.map((mission, index) => {
+                      const completed = isMissionCompleted(mission.id)
+
+                      return (
+                        <div
+                          key={mission.id}
+                          className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3"
+                        >
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-black text-white ${
+                              completed ? 'bg-emerald-500' : 'bg-sky-600'
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-slate-800">
+                              {mission.title}
+                            </p>
+
+                            {completed && (
+                              <p className="mt-0.5 text-xs font-bold text-emerald-600">
+                                완료
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <p className="mt-5 text-xs leading-5 text-slate-500">
+                  추천 경로는 실제 도보 내비게이션 경로가 아니라 Mission의 추천
+                  방문 흐름을 나타냅니다.
+                </p>
+              </div>
+            </aside>
+          </div>
         </section>
+
+        {currentUser?.role === 'USER' && progress?.joined && (
+          <section className="mb-12 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-wrap items-end justify-between gap-5">
+                <div>
+                  <p className="text-sm font-bold text-emerald-600">
+                    내 진행률
+                  </p>
+
+                  <div className="mt-2 flex items-end gap-3">
+                    <p className="text-3xl font-black text-slate-900 sm:text-4xl">
+                      {progress.completedMissionCount}
+                      <span className="text-lg font-bold text-slate-400">
+                        {' '}
+                        / {progress.totalMissionCount}
+                      </span>
+                    </p>
+
+                    <p className="pb-1 text-sm font-bold text-slate-500">
+                      Mission 완료
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-4xl font-black text-emerald-600">
+                    {progress.progressPercent}%
+                  </p>
+
+                  {progress.completed && (
+                    <p className="mt-1 text-sm font-bold text-emerald-600">
+                      🎉 Challenge 완료
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.max(0, progress.progressPercent),
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+                <p className="text-slate-500">
+                  참여일 {formatDateTime(progress.joinedAt)}
+                </p>
+
+                <p className="font-semibold text-slate-600">
+                  {progress.completed
+                    ? '모든 Mission을 완료했습니다.'
+                    : '남은 Mission도 원하는 순서대로 방문해보세요.'}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Mission */}
         <section>
@@ -1687,9 +1722,6 @@ export default function ChallengeDetailPage() {
                   completionPhotos[mission.id] ??
                   createEmptyCompletionPhotoState()
 
-                const displayCompletionPhoto =
-                  photoState.previewUrl ?? photoState.photoImageUrl
-
                 return (
                   <article
                     key={mission.id}
@@ -1699,7 +1731,6 @@ export default function ChallengeDetailPage() {
                         : 'border-slate-200'
                     }`}
                   >
-                    {/* 상단 관광지 카드 */}
                     <div className="grid lg:grid-cols-[44%_56%]">
                       <MissionPhoto mission={mission} completed={completed} />
 
@@ -1739,7 +1770,6 @@ export default function ChallengeDetailPage() {
                         {mission.address && (
                           <p className="mt-5 flex gap-2 text-sm leading-6 text-slate-500">
                             <span aria-hidden="true">📍</span>
-
                             <span>{mission.address}</span>
                           </p>
                         )}
@@ -1770,7 +1800,6 @@ export default function ChallengeDetailPage() {
                           </div>
                         )}
 
-                        {/* 지도 접기 / 펼치기 */}
                         <div className="mt-6">
                           <button
                             type="button"
@@ -1795,7 +1824,6 @@ export default function ChallengeDetailPage() {
                       </div>
                     </div>
 
-                    {/* 펼친 지도 */}
                     {mapExpanded && (
                       <div className="border-t border-slate-100 bg-slate-50 p-4 sm:p-6">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -1824,7 +1852,6 @@ export default function ChallengeDetailPage() {
                       </div>
                     )}
 
-                    {/* 인증 오류 */}
                     {missionErrors[mission.id] && (
                       <div className="border-t border-red-100 bg-red-50 px-5 py-4 sm:px-7">
                         <p className="text-sm font-semibold leading-6 text-red-700">
@@ -1833,7 +1860,6 @@ export default function ChallengeDetailPage() {
                       </div>
                     )}
 
-                    {/* 인증 성공 메시지 */}
                     {missionMessages[mission.id] && (
                       <div className="border-t border-emerald-100 bg-emerald-50 px-5 py-4 sm:px-7">
                         <p className="text-sm font-semibold leading-6 text-emerald-700">
@@ -1842,7 +1868,6 @@ export default function ChallengeDetailPage() {
                       </div>
                     )}
 
-                    {/* 완료 Mission */}
                     {completed ? (
                       <div className="border-t border-emerald-100 bg-emerald-50/50 p-5 sm:p-7">
                         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1870,26 +1895,35 @@ export default function ChallengeDetailPage() {
                               완료사진을 불러오는 중...
                             </p>
                           </div>
+                        ) : photoState.hasPhotoImage ? (
+                          <div className="mt-5 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCompletionPhotoModalMissionId(mission.id)
+                              }
+                              className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+                            >
+                              사진 보기
+                            </button>
+                          </div>
                         ) : (
                           <>
-                            {/* 기존 사진 또는 새 선택 사진 */}
-                            {displayCompletionPhoto && (
+                            {photoState.previewUrl && (
                               <div className="mt-5">
                                 <CompletionPhotoPreview
                                   missionTitle={mission.title}
-                                  photoImageUrl={displayCompletionPhoto}
+                                  photoImageUrl={photoState.previewUrl}
                                 />
 
-                                {photoState.previewUrl && (
-                                  <p className="mt-2 text-xs font-semibold text-sky-600">
-                                    새로 선택한 사진 미리보기
-                                  </p>
-                                )}
+                                <p className="mt-2 text-xs font-semibold text-sky-600">
+                                  새로 선택한 사진 미리보기
+                                </p>
                               </div>
                             )}
 
-                            {!displayCompletionPhoto && (
-                              <div className="mt-5 flex min-h-44 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 text-center">
+                            {!photoState.previewUrl && (
+                              <div className="mt-5 flex min-h-36 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white px-6 text-center">
                                 <span className="text-4xl" aria-hidden="true">
                                   📷
                                 </span>
@@ -1905,28 +1939,23 @@ export default function ChallengeDetailPage() {
                             )}
 
                             <div className="mt-5 flex flex-wrap gap-3">
-                              <label className="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
-                                {photoState.hasPhotoImage
-                                  ? '새 사진 선택'
-                                  : '사진 선택'}
-
-                                <input
-                                  type="file"
-                                  accept="image/jpeg,image/png,image/webp"
-                                  className="hidden"
-                                  disabled={
-                                    photoState.saving || photoState.deleting
-                                  }
-                                  onChange={(event) =>
-                                    handleCompletionPhotoSelect(
-                                      mission.id,
-                                      event,
-                                    )
-                                  }
-                                />
-                              </label>
-
-                              {photoState.selectedFile && (
+                              {!photoState.selectedFile ? (
+                                <label className="cursor-pointer rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                  사진 등록
+                                  <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    className="hidden"
+                                    disabled={photoState.saving}
+                                    onChange={(event) =>
+                                      handleCompletionPhotoSelect(
+                                        mission.id,
+                                        event,
+                                      )
+                                    }
+                                  />
+                                </label>
+                              ) : (
                                 <>
                                   <button
                                     type="button"
@@ -1936,13 +1965,11 @@ export default function ChallengeDetailPage() {
                                       )
                                     }
                                     disabled={photoState.saving}
-                                    className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                    className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                                   >
                                     {photoState.saving
                                       ? '사진 저장 중...'
-                                      : photoState.hasPhotoImage
-                                        ? '사진 교체하기'
-                                        : '사진 등록하기'}
+                                      : '사진 등록하기'}
                                   </button>
 
                                   <button
@@ -1951,48 +1978,30 @@ export default function ChallengeDetailPage() {
                                       cancelCompletionPhotoSelection(mission.id)
                                     }
                                     disabled={photoState.saving}
-                                    className="rounded-xl bg-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
                                   >
                                     선택 취소
                                   </button>
                                 </>
                               )}
-
-                              {photoState.hasPhotoImage &&
-                                !photoState.selectedFile && (
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      void handleCompletionPhotoDelete(
-                                        mission.id,
-                                      )
-                                    }
-                                    disabled={photoState.deleting}
-                                    className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                                  >
-                                    {photoState.deleting
-                                      ? '삭제 중...'
-                                      : '사진 삭제'}
-                                  </button>
-                                )}
                             </div>
-
-                            {photoState.error && (
-                              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
-                                <p className="text-sm font-semibold text-red-700">
-                                  {photoState.error}
-                                </p>
-                              </div>
-                            )}
-
-                            {photoState.message && (
-                              <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4">
-                                <p className="text-sm font-semibold text-emerald-700">
-                                  {photoState.message}
-                                </p>
-                              </div>
-                            )}
                           </>
+                        )}
+
+                        {photoState.error && (
+                          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                            <p className="text-sm font-semibold text-red-700">
+                              {photoState.error}
+                            </p>
+                          </div>
+                        )}
+
+                        {photoState.message && (
+                          <div className="mt-4 rounded-xl border border-emerald-200 bg-white p-4">
+                            <p className="text-sm font-semibold text-emerald-700">
+                              {photoState.message}
+                            </p>
+                          </div>
                         )}
                       </div>
                     ) : currentUser?.role === 'USER' && progress?.joined ? (
@@ -2098,6 +2107,149 @@ export default function ChallengeDetailPage() {
           )}
         </section>
       </div>
+
+      {completionPhotoModalMission &&
+        completionPhotoModalState &&
+        completionPhotoModalImage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm">
+            <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+              <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-6">
+                <div>
+                  <p className="text-xs font-black tracking-widest text-emerald-600">
+                    MY TRIP PHOTO
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">
+                    {completionPhotoModalMission.title}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Mission 완료 후 등록한 여행 사진입니다.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      completionPhotoModalState.previewUrl &&
+                      completionPhotoModalMission
+                    ) {
+                      cancelCompletionPhotoSelection(
+                        completionPhotoModalMission.id,
+                      )
+                    }
+
+                    setCompletionPhotoModalMissionId(null)
+                  }}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xl font-bold text-slate-600 transition hover:bg-slate-200"
+                  aria-label="사진 보기 닫기"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="p-5 sm:p-6">
+                <CompletionPhotoPreview
+                  missionTitle={completionPhotoModalMission.title}
+                  photoImageUrl={completionPhotoModalImage}
+                />
+
+                {completionPhotoModalState.previewUrl && (
+                  <p className="mt-2 text-xs font-semibold text-sky-600">
+                    새로 선택한 사진 미리보기
+                  </p>
+                )}
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <label className="cursor-pointer rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-sky-300 hover:text-sky-700">
+                    사진 변경
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={
+                        completionPhotoModalState.saving ||
+                        completionPhotoModalState.deleting
+                      }
+                      onChange={(event) =>
+                        handleCompletionPhotoSelect(
+                          completionPhotoModalMission.id,
+                          event,
+                        )
+                      }
+                    />
+                  </label>
+
+                  {completionPhotoModalState.selectedFile && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          void handleCompletionPhotoUpload(
+                            completionPhotoModalMission.id,
+                          )
+                        }
+                        disabled={completionPhotoModalState.saving}
+                        className="rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        {completionPhotoModalState.saving
+                          ? '사진 저장 중...'
+                          : '사진 교체하기'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          cancelCompletionPhotoSelection(
+                            completionPhotoModalMission.id,
+                          )
+                        }
+                        disabled={completionPhotoModalState.saving}
+                        className="rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        변경 취소
+                      </button>
+                    </>
+                  )}
+
+                  {!completionPhotoModalState.selectedFile && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void handleCompletionPhotoDelete(
+                          completionPhotoModalMission.id,
+                        )
+                      }
+                      disabled={completionPhotoModalState.deleting}
+                      className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {completionPhotoModalState.deleting
+                        ? '삭제 중...'
+                        : '사진 삭제'}
+                    </button>
+                  )}
+                </div>
+
+                {completionPhotoModalState.error && (
+                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                    <p className="text-sm font-semibold text-red-700">
+                      {completionPhotoModalState.error}
+                    </p>
+                  </div>
+                )}
+
+                {completionPhotoModalState.message && (
+                  <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-sm font-semibold text-emerald-700">
+                      {completionPhotoModalState.message}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
       {qrScannerMissionId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { FormEvent, useEffect, useState } from 'react'
 import { API_BASE_URL } from '../lib/api'
+import { supabase } from '../lib/supabase'
 
 type User = {
   id: number
@@ -12,6 +13,7 @@ type User = {
   role: 'USER' | 'INSTITUTION' | 'ADMIN'
   status: 'ACTIVE' | 'SUSPENDED' | 'DELETED'
   institutionId: number | null
+  googleConnected: boolean
 }
 
 type InstitutionApplication = {
@@ -79,6 +81,32 @@ export default function MyPage() {
   const [error, setError] = useState('')
 
   /*
+   * Google 계정 연결 UI 상태
+   */
+  const [googleLinkLoading, setGoogleLinkLoading] = useState(false)
+
+  const [googleLinkError, setGoogleLinkError] = useState('')
+
+  const [googleLinkSuccess, setGoogleLinkSuccess] = useState('')
+
+  /*
+   * 비밀번호 변경 UI 상태
+   */
+  const [passwordOpen, setPasswordOpen] = useState(false)
+
+  const [currentPassword, setCurrentPassword] = useState('')
+
+  const [newPassword, setNewPassword] = useState('')
+
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState('')
+
+  const [passwordError, setPasswordError] = useState('')
+
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+
+  const [passwordLoading, setPasswordLoading] = useState(false)
+
+  /*
    * 회원탈퇴 UI 상태
    */
   const [withdrawOpen, setWithdrawOpen] = useState(false)
@@ -90,6 +118,20 @@ export default function MyPage() {
   const [withdrawLoading, setWithdrawLoading] = useState(false)
 
   useEffect(() => {
+    const googleLinkMessage = sessionStorage.getItem('googleLinkMessage')
+
+    if (googleLinkMessage) {
+      setGoogleLinkSuccess(googleLinkMessage)
+      sessionStorage.removeItem('googleLinkMessage')
+    }
+
+    const googleLinkErrorMessage = sessionStorage.getItem('googleLinkError')
+
+    if (googleLinkErrorMessage) {
+      setGoogleLinkError(googleLinkErrorMessage)
+      sessionStorage.removeItem('googleLinkError')
+    }
+
     async function loadMyPage() {
       const accessToken = sessionStorage.getItem('accessToken')
 
@@ -208,6 +250,130 @@ export default function MyPage() {
 
     void loadMyPage()
   }, [router])
+
+  /*
+   * Google 계정 연결 시작
+   *
+   * 실제 연결 처리는 /auth/callback?mode=link 에서
+   * Supabase 세션을 확인한 뒤 백엔드 /auth/google/link를 호출한다.
+   */
+  async function startGoogleLink() {
+    setGoogleLinkError('')
+    setGoogleLinkSuccess('')
+
+    const accessToken = sessionStorage.getItem('accessToken')
+
+    if (!accessToken) {
+      router.replace('/login')
+      return
+    }
+
+    setGoogleLinkLoading(true)
+
+    try {
+      const redirectTo = `${window.location.origin}/auth/callback?mode=link`
+
+      const { error: googleError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: 'select_account',
+          },
+        },
+      })
+
+      if (googleError) {
+        setGoogleLinkError(
+          googleError.message || 'Google 계정 연결을 시작하지 못했습니다.',
+        )
+      }
+    } catch {
+      setGoogleLinkError('Google 계정 연결 처리 중 오류가 발생했습니다.')
+    } finally {
+      setGoogleLinkLoading(false)
+    }
+  }
+
+  /*
+   * 비밀번호 변경
+   */
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    setPasswordError('')
+    setPasswordSuccess('')
+
+    if (currentPassword.length < 8) {
+      setPasswordError('현재 비밀번호를 정확히 입력해주세요.')
+      return
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError('새 비밀번호는 최소 8자 이상이어야 합니다.')
+      return
+    }
+
+    if (newPassword.length > 64) {
+      setPasswordError('새 비밀번호는 최대 64자까지 사용할 수 있습니다.')
+      return
+    }
+
+    if (newPassword !== newPasswordConfirm) {
+      setPasswordError('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.')
+      return
+    }
+
+    const accessToken = sessionStorage.getItem('accessToken')
+
+    if (!accessToken) {
+      router.replace('/login')
+      return
+    }
+
+    setPasswordLoading(true)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        method: 'POST',
+
+        headers: {
+          'Content-Type': 'application/json',
+
+          Authorization: `Bearer ${accessToken}`,
+        },
+
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      })
+
+      const data = (await response
+        .json()
+        .catch(() => null)) as ApiResponse | null
+
+      if (!response.ok) {
+        setPasswordError(
+          getMessage(data?.message, '비밀번호 변경에 실패했습니다.'),
+        )
+
+        return
+      }
+
+      setCurrentPassword('')
+      setNewPassword('')
+      setNewPasswordConfirm('')
+
+      setPasswordSuccess(
+        getMessage(data?.message, '비밀번호가 변경되었습니다.'),
+      )
+    } catch {
+      setPasswordError('서버에 연결할 수 없습니다.')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
 
   /*
    * 회원탈퇴
@@ -376,6 +542,221 @@ export default function MyPage() {
               <p className="mt-1 font-medium text-slate-900">{user.role}</p>
             </div>
           </div>
+        </section>
+
+        {/* Google 계정 연결 */}
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm font-semibold text-sky-600">계정 보안</p>
+
+          <h2 className="mt-1 text-xl font-bold text-slate-900">Google 계정</h2>
+
+          {user.googleConnected ? (
+            <>
+              <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                <p className="font-bold text-emerald-800">
+                  Google 계정이 연결되어 있습니다.
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-emerald-700">
+                  이제 이메일/비밀번호 로그인과 Google 로그인을 모두 사용할 수
+                  있습니다.
+                </p>
+
+                <p className="mt-2 break-all text-sm text-emerald-700">
+                  연결된 계정 이메일:{' '}
+                  <span className="font-bold">{user.email}</span>
+                </p>
+              </div>
+
+              {googleLinkSuccess && (
+                <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  {googleLinkSuccess}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                현재 계정과 동일한 이메일의 Google 계정을 연결하면 이후
+                Google로도 간편하게 로그인할 수 있습니다.
+              </p>
+
+              <div className="mt-5 rounded-2xl bg-slate-50 p-5">
+                <p className="font-bold text-slate-800">
+                  연결 가능한 Google 계정
+                </p>
+
+                <p className="mt-2 break-all text-sm leading-6 text-slate-600">
+                  현재 로그인한 이메일과 동일한 Google 계정만 연결할 수
+                  있습니다. 현재 이메일:{' '}
+                  <span className="font-bold text-slate-800">{user.email}</span>
+                </p>
+              </div>
+
+              {googleLinkError && (
+                <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {googleLinkError}
+                </div>
+              )}
+
+              {googleLinkSuccess && (
+                <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  {googleLinkSuccess}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => void startGoogleLink()}
+                disabled={googleLinkLoading}
+                className="mt-5 flex items-center justify-center gap-3 rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-black text-slate-700">
+                  G
+                </span>
+
+                {googleLinkLoading ? 'Google 연결 중...' : 'Google 계정 연결'}
+              </button>
+            </>
+          )}
+        </section>
+
+        {/* 비밀번호 변경 */}
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm font-semibold text-sky-600">계정 보안</p>
+
+          <h2 className="mt-1 text-xl font-bold text-slate-900">
+            비밀번호 변경
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            현재 비밀번호를 확인한 뒤 새 비밀번호로 변경할 수 있습니다.
+          </p>
+
+          {!passwordOpen && (
+            <button
+              type="button"
+              onClick={() => {
+                setPasswordOpen(true)
+                setPasswordError('')
+                setPasswordSuccess('')
+              }}
+              className="mt-5 rounded-xl bg-sky-600 px-5 py-3 font-bold text-white transition hover:bg-sky-700"
+            >
+              비밀번호 변경
+            </button>
+          )}
+
+          {passwordOpen && (
+            <form
+              onSubmit={changePassword}
+              className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5"
+            >
+              <div>
+                <label
+                  htmlFor="currentPassword"
+                  className="block text-sm font-bold text-slate-700"
+                >
+                  현재 비밀번호
+                </label>
+
+                <input
+                  id="currentPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  disabled={passwordLoading}
+                  placeholder="현재 비밀번호"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100"
+                />
+              </div>
+
+              <div className="mt-4">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-bold text-slate-700"
+                >
+                  새 비밀번호
+                </label>
+
+                <input
+                  id="newPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  disabled={passwordLoading}
+                  placeholder="새 비밀번호"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100"
+                />
+
+                <p className="mt-2 text-xs text-slate-500">
+                  비밀번호는 8자 이상 64자 이하로 입력해주세요.
+                </p>
+              </div>
+
+              <div className="mt-4">
+                <label
+                  htmlFor="newPasswordConfirm"
+                  className="block text-sm font-bold text-slate-700"
+                >
+                  새 비밀번호 확인
+                </label>
+
+                <input
+                  id="newPasswordConfirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPasswordConfirm}
+                  onChange={(event) =>
+                    setNewPasswordConfirm(event.target.value)
+                  }
+                  disabled={passwordLoading}
+                  placeholder="새 비밀번호 다시 입력"
+                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 disabled:bg-slate-100"
+                />
+              </div>
+
+              {passwordError && (
+                <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="rounded-xl bg-sky-600 px-5 py-3 font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {passwordLoading ? '변경 중...' : '비밀번호 변경'}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={passwordLoading}
+                  onClick={() => {
+                    setPasswordOpen(false)
+                    setCurrentPassword('')
+                    setNewPassword('')
+                    setNewPasswordConfirm('')
+                    setPasswordError('')
+                    setPasswordSuccess('')
+                  }}
+                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          )}
         </section>
 
         {/* ADMIN 전용 안내 */}
