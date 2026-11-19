@@ -70,7 +70,7 @@ export default function SiteHeader() {
           href="/"
           className="shrink-0 text-lg font-extrabold tracking-tight text-sky-600"
         >
-          Korea Trip Quest
+          Trip Quest Korea
         </Link>
 
         {!user ? (

@@ -186,13 +186,13 @@ export default function SignupPage() {
       <div className="w-full max-w-lg">
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <p className="text-sm font-bold tracking-widest text-sky-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-3 text-3xl font-bold text-slate-900">회원가입</h1>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            이메일 인증 후 Korea Trip Quest를 시작해보세요.
+            이메일 인증 후 Trip Quest Korea를 시작해보세요.
           </p>
 
           <div className="mt-7 flex gap-2">

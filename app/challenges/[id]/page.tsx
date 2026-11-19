@@ -10,6 +10,8 @@ import { API_BASE_URL } from '../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
 
+type ChallengeRouteMode = 'WALKING' | 'CYCLING' | 'DRIVING'
+
 type UserRole = 'USER' | 'INSTITUTION' | 'ADMIN'
 
 type Challenge = {
@@ -20,6 +22,8 @@ type Challenge = {
   status: string
   startAt: string | null
   endAt: string | null
+
+  routeMode: ChallengeRouteMode
 
   hasCoverImage: boolean
   coverImageUrl: string | null
@@ -481,6 +485,12 @@ export default function ChallengeDetailPage() {
           ...challengeData.challenge,
 
           hasCoverImage: Boolean(challengeData.challenge.hasCoverImage),
+
+          routeMode:
+            challengeData.challenge.routeMode === 'CYCLING' ||
+            challengeData.challenge.routeMode === 'DRIVING'
+              ? challengeData.challenge.routeMode
+              : 'WALKING',
 
           coverImageUrl: challengeData.challenge.coverImageUrl ?? null,
 
@@ -1539,6 +1549,7 @@ export default function ChallengeDetailPage() {
             <ChallengeSummaryMap
               missions={missions}
               completedMissionIds={progress?.completedMissionIds ?? []}
+              routeMode={challenge.routeMode}
             />
 
             <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1554,10 +1565,16 @@ export default function ChallengeDetailPage() {
                 </div>
 
                 <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-bold text-slate-400">수행 방식</p>
+                  <p className="text-xs font-bold text-slate-400">
+                    추천 이동수단
+                  </p>
 
                   <p className="mt-1 text-sm font-black text-slate-900">
-                    자유 순서
+                    {challenge.routeMode === 'WALKING'
+                      ? '🚶 도보'
+                      : challenge.routeMode === 'CYCLING'
+                        ? '🚲 자전거'
+                        : '🚗 자동차'}
                   </p>
                 </div>
               </div>
@@ -1611,8 +1628,8 @@ export default function ChallengeDetailPage() {
                 )}
 
                 <p className="mt-5 text-xs leading-5 text-slate-500">
-                  추천 경로는 실제 도보 내비게이션 경로가 아니라 Mission의 추천
-                  방문 흐름을 나타냅니다.
+                  추천 이동 순서는 기관이 설정한 기준이며 실제 Mission 수행
+                  순서를 강제하지 않습니다.
                 </p>
               </div>
             </aside>

@@ -288,7 +288,7 @@ export default function ForgotPasswordPage() {
 
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
           <p className="text-sm font-bold tracking-widest text-sky-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-3 text-3xl font-bold text-slate-900">

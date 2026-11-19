@@ -907,7 +907,7 @@ export default function InstitutionSignupPage() {
       <main className="flex flex-1 items-center justify-center bg-slate-50 px-6 py-12">
         <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <p className="text-sm font-bold tracking-widest text-violet-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-3 text-2xl font-bold text-slate-900">
@@ -956,7 +956,7 @@ export default function InstitutionSignupPage() {
           </Link>
 
           <p className="mt-7 text-sm font-bold tracking-widest text-violet-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-3 text-3xl font-bold text-slate-900">

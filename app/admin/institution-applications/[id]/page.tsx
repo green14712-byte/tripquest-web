@@ -633,7 +633,7 @@ export default function InstitutionApplicationDetailPage() {
 
         <div className="mt-7">
           <p className="text-sm font-bold tracking-widest text-red-600">
-            KOREA TRIP QUEST ADMIN
+            TRIP QUEST KOREA ADMIN
           </p>
 
           <div className="mt-2 flex flex-wrap items-start justify-between gap-4">

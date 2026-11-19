@@ -168,7 +168,7 @@ export default function InstitutionPage() {
         {/* 제목 */}
         <div>
           <p className="text-sm font-bold tracking-widest text-violet-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-slate-900">기관 관리</h1>

@@ -158,7 +158,7 @@ export default function AuthCallbackPage() {
         /*
          * 일반 Google 간편가입 / 로그인
          */
-        setMessage('Korea Trip Quest 계정에 로그인하고 있습니다.')
+        setMessage('Trip Quest Korea 계정에 로그인하고 있습니다.')
 
         const response = await fetch(`${API_BASE_URL}/auth/google`, {
           method: 'POST',
@@ -216,7 +216,7 @@ export default function AuthCallbackPage() {
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
         <p className="text-sm font-bold tracking-widest text-sky-600">
-          KOREA TRIP QUEST
+          TRIP QUEST KOREA
         </p>
 
         <h1 className="mt-3 text-2xl font-bold text-slate-900">Google 인증</h1>

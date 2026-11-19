@@ -56,7 +56,7 @@ export default function SignupTypePage() {
       <div className="w-full max-w-3xl">
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
           <p className="text-sm font-bold tracking-widest text-sky-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">
@@ -64,7 +64,7 @@ export default function SignupTypePage() {
           </h1>
 
           <p className="mt-3 text-slate-600">
-            Korea Trip Quest를 어떤 목적으로 이용하시나요?
+            Trip Quest Korea를 어떤 목적으로 이용하시나요?
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">

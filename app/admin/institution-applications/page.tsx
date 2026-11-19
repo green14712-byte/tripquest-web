@@ -248,7 +248,7 @@ export default function InstitutionApplicationsAdminPage() {
       <div className="w-full max-w-5xl">
         <div>
           <p className="text-sm font-bold tracking-widest text-red-600">
-            KOREA TRIP QUEST ADMIN
+            TRIP QUEST KOREA ADMIN
           </p>
 
           <div className="mt-2 flex flex-wrap items-end justify-between gap-4">

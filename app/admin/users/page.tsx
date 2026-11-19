@@ -619,7 +619,7 @@ export default function AdminUsersPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-bold tracking-widest text-red-600">
-              KOREA TRIP QUEST ADMIN
+              TRIP QUEST KOREA ADMIN
             </p>
 
             <h1 className="mt-2 text-3xl font-bold text-slate-900">

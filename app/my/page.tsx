@@ -122,6 +122,7 @@ export default function MyPage() {
 
     if (googleLinkMessage) {
       setGoogleLinkSuccess(googleLinkMessage)
+
       sessionStorage.removeItem('googleLinkMessage')
     }
 
@@ -129,6 +130,7 @@ export default function MyPage() {
 
     if (googleLinkErrorMessage) {
       setGoogleLinkError(googleLinkErrorMessage)
+
       sessionStorage.removeItem('googleLinkError')
     }
 
@@ -275,8 +277,10 @@ export default function MyPage() {
 
       const { error: googleError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+
         options: {
           redirectTo,
+
           queryParams: {
             prompt: 'select_account',
           },
@@ -306,21 +310,25 @@ export default function MyPage() {
 
     if (currentPassword.length < 8) {
       setPasswordError('현재 비밀번호를 정확히 입력해주세요.')
+
       return
     }
 
     if (newPassword.length < 8) {
       setPasswordError('새 비밀번호는 최소 8자 이상이어야 합니다.')
+
       return
     }
 
     if (newPassword.length > 64) {
       setPasswordError('새 비밀번호는 최대 64자까지 사용할 수 있습니다.')
+
       return
     }
 
     if (newPassword !== newPasswordConfirm) {
       setPasswordError('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.')
+
       return
     }
 
@@ -444,7 +452,6 @@ export default function MyPage() {
       }
 
       sessionStorage.removeItem('accessToken')
-
       sessionStorage.removeItem('user')
 
       window.alert('회원탈퇴가 완료되었습니다.')
@@ -493,7 +500,7 @@ export default function MyPage() {
       <div className="w-full max-w-3xl">
         <div>
           <p className="text-sm font-bold tracking-widest text-sky-600">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="mt-2 text-3xl font-bold text-slate-900">My</h1>
@@ -543,6 +550,62 @@ export default function MyPage() {
             </div>
           </div>
         </section>
+
+        {/* USER 배지 장식장 */}
+        {user.role === 'USER' && (
+          <section className="mt-6 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm">
+            <div className="relative overflow-hidden bg-linear-to-br from-violet-50 via-white to-sky-50 p-8">
+              <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-violet-200/30" />
+
+              <div className="absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-sky-200/30" />
+
+              <div className="relative">
+                <div className="flex items-start gap-5">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-4xl shadow-sm">
+                    🏆
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold tracking-widest text-violet-600">
+                      MY BADGE CABINET
+                    </p>
+
+                    <h2 className="mt-1 text-2xl font-black text-slate-900">
+                      내 배지 장식장
+                    </h2>
+
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600">
+                      Challenge를 완주하며 획득한 배지를 한곳에서 모아볼 수
+                      있습니다. 획득 당시의 배지 디자인과 버전, 난이도, 보유율을
+                      확인해보세요.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-white/80 bg-white/70 p-4 backdrop-blur">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden="true">
+                      ✨
+                    </span>
+
+                    <p className="text-sm leading-6 text-slate-600">
+                      한 번 획득한 배지는 이후 Challenge가 변경되어도 획득
+                      당시의 BadgeVersion으로 보존됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/my/badges"
+                  className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 font-bold text-white shadow-sm transition hover:bg-violet-700"
+                >
+                  <span>내 배지 장식장 보기</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Google 계정 연결 */}
         <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -985,7 +1048,6 @@ export default function MyPage() {
                   type="button"
                   onClick={() => {
                     setWithdrawOpen(true)
-
                     setWithdrawError('')
                   }}
                   className="mt-5 rounded-xl border border-red-300 bg-white px-5 py-3 font-bold text-red-600 transition hover:bg-red-50"
@@ -1043,9 +1105,7 @@ export default function MyPage() {
                       disabled={withdrawLoading}
                       onClick={() => {
                         setWithdrawOpen(false)
-
                         setWithdrawPassword('')
-
                         setWithdrawError('')
                       }}
                       className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"

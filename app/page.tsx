@@ -100,7 +100,7 @@ export default async function Home() {
 
         <div className="relative mx-auto max-w-6xl">
           <p className="mb-3 text-sm font-semibold tracking-widest text-sky-100">
-            KOREA TRIP QUEST
+            TRIP QUEST KOREA
           </p>
 
           <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
