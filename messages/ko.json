@@ -1,0 +1,75 @@
+{
+  "Common": {
+    "serviceName": "Trip Quest Korea",
+    "home": "홈",
+    "login": "로그인",
+    "logout": "로그아웃",
+    "signup": "회원가입",
+    "my": "My",
+    "challenge": "챌린지",
+    "search": "검색",
+    "loading": "불러오는 중...",
+    "confirm": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "traveler": "여행자",
+    "institution": "기관",
+    "admin": "관리자",
+    "institutionManagement": "기관 관리",
+    "institutionApplications": "기관 신청 관리",
+    "userManagement": "회원 관리",
+    "language": "언어"
+  },
+  "Home": {
+    "hero": {
+      "title": "여행을 퀘스트처럼 즐겨보세요",
+      "description": "한국의 관광지를 방문하고 미션을 완료해 여행 기록과 배지를 모아보세요."
+    },
+    "challengeSection": {
+      "eyebrow": "AVAILABLE QUESTS",
+      "title": "진행 가능한 Challenge",
+      "description": "현재 공개된 여행 Challenge를 확인해보세요.",
+      "count": "총 {count}개"
+    },
+    "empty": {
+      "title": "현재 표시할 Challenge가 없습니다.",
+      "description": "백엔드 서버가 실행 중인지 확인해주세요."
+    },
+    "status": {
+      "active": "운영 중",
+      "paused": "운영 중단",
+      "ended": "종료"
+    },
+    "card": {
+      "type": "Trip Challenge",
+      "noCoverImage": "등록된 대표사진이 없습니다.",
+      "undecidedRegion": "지역 미정",
+      "noDescription": "Challenge 설명이 없습니다.",
+      "start": "시작",
+      "end": "종료",
+      "undecidedDate": "미정",
+      "viewChallenge": "Challenge 보기"
+    }
+  },
+  "Login": {
+    "backHome": "홈으로",
+    "title": "로그인",
+    "description": "Challenge에 참여하려면 로그인해주세요.",
+    "email": "이메일",
+    "password": "비밀번호",
+    "passwordPlaceholder": "비밀번호를 입력하세요",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "login": "로그인",
+    "loggingIn": "로그인 중...",
+    "or": "또는",
+    "continueWithGoogle": "Google로 계속하기",
+    "googleLoggingIn": "Google 로그인 중...",
+    "errors": {
+      "loginFailed": "로그인에 실패했습니다.",
+      "invalidResponse": "로그인 응답을 확인할 수 없습니다.",
+      "serverConnection": "서버에 연결할 수 없습니다.",
+      "googleLoginFailed": "Google 로그인에 실패했습니다.",
+      "googleLoginError": "Google 로그인 처리 중 오류가 발생했습니다."
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "Common": {
+    "serviceName": "Trip Quest Korea",
+    "home": "Home",
+    "login": "Login",
+    "logout": "Logout",
+    "signup": "Sign Up",
+    "my": "My",
+    "challenge": "Challenges",
+    "search": "Search",
+    "loading": "Loading...",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "traveler": "Traveler",
+    "institution": "Institution",
+    "admin": "Administrator",
+    "institutionManagement": "Institution Management",
+    "institutionApplications": "Institution Applications",
+    "userManagement": "User Management",
+    "language": "Language"
+  },
+  "Home": {
+    "hero": {
+      "title": "Turn Your Journey into a Quest",
+      "description": "Visit destinations across Korea, complete missions, and collect travel memories and badges."
+    },
+    "challengeSection": {
+      "eyebrow": "AVAILABLE QUESTS",
+      "title": "Available Challenges",
+      "description": "Explore the travel challenges currently available.",
+      "count": "{count, plural, one {# challenge} other {# challenges}}"
+    },
+    "empty": {
+      "title": "There are currently no challenges to display.",
+      "description": "Please check whether the backend server is running."
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused",
+      "ended": "Ended"
+    },
+    "card": {
+      "type": "Trip Challenge",
+      "noCoverImage": "No cover image has been added.",
+      "undecidedRegion": "Region not specified",
+      "noDescription": "No challenge description is available.",
+      "start": "Start",
+      "end": "End",
+      "undecidedDate": "TBD",
+      "viewChallenge": "View Challenge"
+    }
+  },
+  "Login": {
+    "backHome": "Back to Home",
+    "title": "Login",
+    "description": "Log in to participate in Challenges.",
+    "email": "Email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot your password?",
+    "login": "Login",
+    "loggingIn": "Logging in...",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "googleLoggingIn": "Signing in with Google...",
+    "errors": {
+      "loginFailed": "Login failed.",
+      "invalidResponse": "Unable to verify the login response.",
+      "serverConnection": "Unable to connect to the server.",
+      "googleLoginFailed": "Google login failed.",
+      "googleLoginError": "An error occurred while signing in with Google."
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "Common": {
+    "serviceName": "Trip Quest Korea",
+    "home": "首页",
+    "login": "登录",
+    "logout": "退出登录",
+    "signup": "注册",
+    "my": "我的",
+    "challenge": "挑战",
+    "search": "搜索",
+    "loading": "加载中...",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "traveler": "旅行者",
+    "institution": "机构",
+    "admin": "管理员",
+    "institutionManagement": "机构管理",
+    "institutionApplications": "机构申请管理",
+    "userManagement": "用户管理",
+    "language": "语言"
+  },
+  "Home": {
+    "hero": {
+      "title": "像完成任务一样享受旅行",
+      "description": "游览韩国各地的旅游景点，完成任务，收集旅行记录和徽章。"
+    },
+    "challengeSection": {
+      "eyebrow": "AVAILABLE QUESTS",
+      "title": "可参与的挑战",
+      "description": "查看目前公开的旅行挑战。",
+      "count": "共 {count} 个"
+    },
+    "empty": {
+      "title": "目前没有可显示的挑战。",
+      "description": "请确认后端服务器是否正在运行。"
+    },
+    "status": {
+      "active": "进行中",
+      "paused": "已暂停",
+      "ended": "已结束"
+    },
+    "card": {
+      "type": "Trip Challenge",
+      "noCoverImage": "尚未设置封面图片。",
+      "undecidedRegion": "地区未定",
+      "noDescription": "暂无挑战说明。",
+      "start": "开始",
+      "end": "结束",
+      "undecidedDate": "待定",
+      "viewChallenge": "查看挑战"
+    }
+  },
+  "Login": {
+    "backHome": "返回首页",
+    "title": "登录",
+    "description": "登录后即可参与挑战。",
+    "email": "电子邮箱",
+    "password": "密码",
+    "passwordPlaceholder": "请输入密码",
+    "forgotPassword": "忘记密码？",
+    "login": "登录",
+    "loggingIn": "正在登录...",
+    "or": "或",
+    "continueWithGoogle": "使用 Google 继续",
+    "googleLoggingIn": "正在使用 Google 登录...",
+    "errors": {
+      "loginFailed": "登录失败。",
+      "invalidResponse": "无法确认登录响应。",
+      "serverConnection": "无法连接到服务器。",
+      "googleLoginFailed": "Google 登录失败。",
+      "googleLoginError": "Google 登录过程中发生错误。"
+    }
+  }
+}

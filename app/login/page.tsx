@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+
 import { API_BASE_URL } from '../lib/api'
 import { supabase } from '../lib/supabase'
 
@@ -23,6 +25,7 @@ type LoginResponse = {
 
 export default function LoginPage() {
   const router = useRouter()
+  const t = useTranslations('Login')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -55,12 +58,12 @@ export default function LoginPage() {
       const data = (await response.json()) as LoginResponse
 
       if (!response.ok) {
-        setError(data.message ?? '로그인에 실패했습니다.')
+        setError(data.message ?? t('errors.loginFailed'))
         return
       }
 
       if (!data.accessToken || !data.user) {
-        setError('로그인 응답을 확인할 수 없습니다.')
+        setError(t('errors.invalidResponse'))
         return
       }
 
@@ -75,7 +78,7 @@ export default function LoginPage() {
 
       router.push('/')
     } catch {
-      setError('서버에 연결할 수 없습니다.')
+      setError(t('errors.serverConnection'))
     } finally {
       setLoading(false)
     }
@@ -97,10 +100,10 @@ export default function LoginPage() {
       })
 
       if (googleError) {
-        setError(googleError.message || 'Google 로그인에 실패했습니다.')
+        setError(googleError.message || t('errors.googleLoginFailed'))
       }
     } catch {
-      setError('Google 로그인 처리 중 오류가 발생했습니다.')
+      setError(t('errors.googleLoginError'))
     } finally {
       setGoogleLoading(false)
     }
@@ -113,7 +116,7 @@ export default function LoginPage() {
           href="/"
           className="mb-6 inline-block text-sm font-semibold text-sky-600 hover:text-sky-700"
         >
-          ← 홈으로
+          ← {t('backHome')}
         </Link>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -121,10 +124,12 @@ export default function LoginPage() {
             TRIP QUEST KOREA
           </p>
 
-          <h1 className="mt-3 text-3xl font-bold text-slate-900">로그인</h1>
+          <h1 className="mt-3 text-3xl font-bold text-slate-900">
+            {t('title')}
+          </h1>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Challenge에 참여하려면 로그인해주세요.
+            {t('description')}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -133,7 +138,7 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="mb-2 block text-sm font-bold text-slate-800"
               >
-                이메일
+                {t('email')}
               </label>
 
               <input
@@ -153,7 +158,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="mb-2 block text-sm font-bold text-slate-800"
               >
-                비밀번호
+                {t('password')}
               </label>
 
               <input
@@ -163,7 +168,7 @@ export default function LoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
                 required
                 autoComplete="current-password"
-                placeholder="비밀번호를 입력하세요"
+                placeholder={t('passwordPlaceholder')}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-medium text-slate-900 caret-sky-600 outline-none transition placeholder:text-slate-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
               />
 
@@ -172,7 +177,7 @@ export default function LoginPage() {
                   href="/forgot-password"
                   className="text-sm font-semibold text-sky-600 hover:text-sky-700"
                 >
-                  비밀번호를 잊으셨나요?
+                  {t('forgotPassword')}
                 </Link>
               </div>
             </div>
@@ -188,14 +193,16 @@ export default function LoginPage() {
               disabled={loading || googleLoading}
               className="w-full rounded-xl bg-sky-600 px-4 py-3 font-bold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {loading ? '로그인 중...' : '로그인'}
+              {loading ? t('loggingIn') : t('login')}
             </button>
           </form>
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />
 
-            <span className="text-xs font-semibold text-slate-400">또는</span>
+            <span className="text-xs font-semibold text-slate-400">
+              {t('or')}
+            </span>
 
             <div className="h-px flex-1 bg-slate-200" />
           </div>
@@ -210,7 +217,7 @@ export default function LoginPage() {
               G
             </span>
 
-            {googleLoading ? 'Google 로그인 중...' : 'Google로 계속하기'}
+            {googleLoading ? t('googleLoggingIn') : t('continueWithGoogle')}
           </button>
         </div>
       </div>

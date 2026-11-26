@@ -1,0 +1,75 @@
+{
+  "Common": {
+    "serviceName": "Trip Quest Korea",
+    "home": "ホーム",
+    "login": "ログイン",
+    "logout": "ログアウト",
+    "signup": "会員登録",
+    "my": "マイページ",
+    "challenge": "チャレンジ",
+    "search": "検索",
+    "loading": "読み込み中...",
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "traveler": "旅行者",
+    "institution": "機関",
+    "admin": "管理者",
+    "institutionManagement": "機関管理",
+    "institutionApplications": "機関申請管理",
+    "userManagement": "会員管理",
+    "language": "言語"
+  },
+  "Home": {
+    "hero": {
+      "title": "旅をクエストのように楽しもう",
+      "description": "韓国の観光地を訪れ、ミッションをクリアして旅の記録やバッジを集めましょう。"
+    },
+    "challengeSection": {
+      "eyebrow": "AVAILABLE QUESTS",
+      "title": "参加可能なチャレンジ",
+      "description": "現在公開されている旅行チャレンジを確認してみましょう。",
+      "count": "全{count}件"
+    },
+    "empty": {
+      "title": "現在表示できるチャレンジはありません。",
+      "description": "バックエンドサーバーが起動しているか確認してください。"
+    },
+    "status": {
+      "active": "開催中",
+      "paused": "一時停止",
+      "ended": "終了"
+    },
+    "card": {
+      "type": "Trip Challenge",
+      "noCoverImage": "登録された代表画像はありません。",
+      "undecidedRegion": "地域未定",
+      "noDescription": "チャレンジの説明はありません。",
+      "start": "開始",
+      "end": "終了",
+      "undecidedDate": "未定",
+      "viewChallenge": "チャレンジを見る"
+    }
+  },
+  "Login": {
+    "backHome": "ホームへ戻る",
+    "title": "ログイン",
+    "description": "チャレンジに参加するにはログインしてください。",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordPlaceholder": "パスワードを入力してください",
+    "forgotPassword": "パスワードをお忘れですか？",
+    "login": "ログイン",
+    "loggingIn": "ログイン中...",
+    "or": "または",
+    "continueWithGoogle": "Googleで続ける",
+    "googleLoggingIn": "Googleでログイン中...",
+    "errors": {
+      "loginFailed": "ログインに失敗しました。",
+      "invalidResponse": "ログイン応答を確認できません。",
+      "serverConnection": "サーバーに接続できません。",
+      "googleLoginFailed": "Googleログインに失敗しました。",
+      "googleLoginError": "Googleログイン処理中にエラーが発生しました。"
+    }
+  }
+}

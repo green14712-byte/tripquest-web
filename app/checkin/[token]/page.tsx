@@ -4,6 +4,11 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
+import BadgeAchievementModal, {
+  hasNewBadgeAward,
+  type ChallengeCompletionResult,
+} from '../../components/badge-achievement-modal'
+
 import { API_BASE_URL } from '../../lib/api'
 
 type UserRole = 'USER' | 'INSTITUTION' | 'ADMIN'
@@ -32,6 +37,11 @@ type VerificationResult = {
     completedAt?: string
   }
 
+  /*
+   * Challenge 완료 및 신규 배지 지급 결과
+   */
+  challengeCompletion?: ChallengeCompletionResult
+
   verification?: {
     missionId?: number
     challengeId?: number
@@ -42,6 +52,12 @@ type VerificationResult = {
     distanceMeters?: number | null
     allowedRadiusMeters?: number
   }
+}
+
+type BadgeAchievementState = {
+  userBadgeId: number
+  badgeVersionId: number
+  accessToken: string
 }
 
 type AuthState = 'checking' | 'logged_out' | 'authenticated'
@@ -65,6 +81,15 @@ export default function MissionQrCheckinPage() {
   const [locationNotice, setLocationNotice] = useState('')
 
   const [result, setResult] = useState<VerificationResult | null>(null)
+
+  /*
+   * 신규 배지 획득 팝업 상태
+   *
+   * 이번 Mission 인증 요청에서 실제 신규 배지가
+   * 지급된 경우에만 상태를 설정한다.
+   */
+  const [badgeAchievement, setBadgeAchievement] =
+    useState<BadgeAchievementState | null>(null)
 
   useEffect(() => {
     async function checkAuth() {
@@ -110,7 +135,11 @@ export default function MissionQrCheckinPage() {
 
   function getResponseMessage(data: unknown, fallback: string) {
     if (typeof data === 'object' && data !== null && 'message' in data) {
-      const message = (data as { message?: string | string[] }).message
+      const message = (
+        data as {
+          message?: string | string[]
+        }
+      ).message
 
       if (Array.isArray(message)) {
         return message.join(', ')
@@ -185,6 +214,14 @@ export default function MissionQrCheckinPage() {
     }
   }
 
+  /*
+   * Mission QR 인증
+   *
+   * QR 단독 인증 및 위치 + QR 인증을 처리한다.
+   *
+   * 이번 인증에서 Challenge를 최초 완료하고
+   * 신규 배지를 지급받은 경우 획득 팝업을 표시한다.
+   */
   async function handleVerify() {
     if (!tokenParam) {
       setError('QR 인증 정보를 확인할 수 없습니다.')
@@ -214,6 +251,7 @@ export default function MissionQrCheckinPage() {
     setResult(null)
 
     let position: GeolocationPosition | null = null
+
     let locationFailureMessage = ''
 
     /*
@@ -300,9 +338,34 @@ export default function MissionQrCheckinPage() {
         throw new Error(serverMessage)
       }
 
+      /*
+       * 기존 QR 인증 성공 결과 저장
+       */
       setResult(data)
 
       setError('')
+
+      /*
+       * 신규 배지 획득 여부 확인
+       *
+       * 이번 인증으로 Challenge를 최초 완료했고,
+       * 실제 신규 UserBadge가 발급된 경우에만
+       * 배지 획득 팝업을 표시한다.
+       *
+       * 기존 완료자, 일반 Mission 완료,
+       * 과거 배지 복원 등의 경우에는 표시하지 않는다.
+       */
+      const challengeCompletion = data?.challengeCompletion
+
+      if (hasNewBadgeAward(challengeCompletion)) {
+        setBadgeAchievement({
+          userBadgeId: challengeCompletion.userBadgeId,
+
+          badgeVersionId: challengeCompletion.badgeVersionId,
+
+          accessToken,
+        })
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message)
@@ -556,6 +619,16 @@ export default function MissionQrCheckinPage() {
           </div>
         )}
       </div>
+
+      {/* 신규 배지 획득 축하 팝업 */}
+      {badgeAchievement && (
+        <BadgeAchievementModal
+          userBadgeId={badgeAchievement.userBadgeId}
+          badgeVersionId={badgeAchievement.badgeVersionId}
+          accessToken={badgeAchievement.accessToken}
+          onClose={() => setBadgeAchievement(null)}
+        />
+      )}
     </main>
   )
 }

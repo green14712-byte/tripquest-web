@@ -1,4 +1,8 @@
 import Link from 'next/link'
+import { getLocale, getTranslations } from 'next-intl/server'
+
+import ChallengeRating from './components/challenge-rating'
+
 import { API_BASE_URL } from './lib/api'
 
 type Challenge = {
@@ -17,6 +21,9 @@ type Challenge = {
   coverPositionY: number
 
   institutionId: number
+
+  averageRating?: number
+  reviewCount?: number
 }
 
 type ChallengesResponse = {
@@ -52,6 +59,16 @@ async function getChallenges(): Promise<Challenge[]> {
             typeof challenge.coverPositionY === 'number'
               ? challenge.coverPositionY
               : 50,
+
+          averageRating:
+            typeof challenge.averageRating === 'number'
+              ? challenge.averageRating
+              : 0,
+
+          reviewCount:
+            typeof challenge.reviewCount === 'number'
+              ? challenge.reviewCount
+              : 0,
         }))
       : []
   } catch {
@@ -59,36 +76,59 @@ async function getChallenges(): Promise<Challenge[]> {
   }
 }
 
-function formatDate(date: string | null) {
+function getDateLocale(locale: string) {
+  switch (locale) {
+    case 'en':
+      return 'en-US'
+
+    case 'ja':
+      return 'ja-JP'
+
+    case 'zh-CN':
+      return 'zh-CN'
+
+    default:
+      return 'ko-KR'
+  }
+}
+
+function formatDate(
+  date: string | null,
+  locale: string,
+  undecidedLabel: string,
+) {
   if (!date) {
-    return '미정'
+    return undecidedLabel
   }
 
-  return new Intl.DateTimeFormat('ko-KR', {
+  return new Intl.DateTimeFormat(getDateLocale(locale), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   }).format(new Date(date))
 }
 
-function getStatusLabel(status: string) {
-  switch (status) {
-    case 'ACTIVE':
-      return '운영 중'
-
-    case 'PAUSED':
-      return '운영 중단'
-
-    case 'ENDED':
-      return '종료'
-
-    default:
-      return status
-  }
-}
-
 export default async function Home() {
   const challenges = await getChallenges()
+
+  const locale = await getLocale()
+  const t = await getTranslations('Home')
+
+  function getStatusLabel(status: string) {
+    switch (status) {
+      case 'ACTIVE':
+        return t('status.active')
+
+      case 'PAUSED':
+        return t('status.paused')
+
+      case 'ENDED':
+        return t('status.ended')
+
+      default:
+        return status
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -104,12 +144,11 @@ export default async function Home() {
           </p>
 
           <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-            여행을 퀘스트처럼 즐겨보세요
+            {t('hero.title')}
           </h1>
 
           <p className="mt-5 max-w-2xl text-lg leading-8 text-sky-100">
-            한국의 관광지를 방문하고 미션을 완료해 여행 기록과 배지를
-            모아보세요.
+            {t('hero.description')}
           </p>
         </div>
       </section>
@@ -118,32 +157,34 @@ export default async function Home() {
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-bold text-sky-600">AVAILABLE QUESTS</p>
+            <p className="text-sm font-bold text-sky-600">
+              {t('challengeSection.eyebrow')}
+            </p>
 
             <h2 className="mt-1 text-2xl font-black text-slate-900">
-              진행 가능한 Challenge
+              {t('challengeSection.title')}
             </h2>
 
             <p className="mt-2 text-slate-600">
-              현재 공개된 여행 Challenge를 확인해보세요.
+              {t('challengeSection.description')}
             </p>
           </div>
 
           {challenges.length > 0 && (
             <span className="rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-500 shadow-sm">
-              총 {challenges.length}개
+              {t('challengeSection.count', {
+                count: challenges.length,
+              })}
             </span>
           )}
         </div>
 
         {challenges.length === 0 ? (
           <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-            <p className="font-semibold text-slate-800">
-              현재 표시할 Challenge가 없습니다.
-            </p>
+            <p className="font-semibold text-slate-800">{t('empty.title')}</p>
 
             <p className="mt-2 text-sm text-slate-500">
-              백엔드 서버가 실행 중인지 확인해주세요.
+              {t('empty.description')}
             </p>
           </div>
         ) : (
@@ -159,7 +200,7 @@ export default async function Home() {
                     {challenge.coverImageUrl ? (
                       <img
                         src={challenge.coverImageUrl}
-                        alt={`${challenge.title} Challenge 대표사진`}
+                        alt={challenge.title}
                         className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                         style={{
                           objectPosition: `${challenge.coverPositionX}% ${challenge.coverPositionY}%`,
@@ -172,7 +213,7 @@ export default async function Home() {
                         </span>
 
                         <p className="mt-3 text-sm font-bold text-slate-500">
-                          등록된 대표사진이 없습니다.
+                          {t('card.noCoverImage')}
                         </p>
                       </div>
                     )}
@@ -182,7 +223,7 @@ export default async function Home() {
                     )}
 
                     <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1.5 text-xs font-bold text-sky-700 shadow-sm backdrop-blur">
-                      📍 {challenge.region ?? '지역 미정'}
+                      📍 {challenge.region ?? t('card.undecidedRegion')}
                     </span>
 
                     <span className="absolute right-4 top-4 rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">
@@ -195,36 +236,57 @@ export default async function Home() {
                 <div className="flex min-h-72 flex-col p-6">
                   <div className="flex-1">
                     <p className="text-xs font-bold uppercase tracking-widest text-sky-500">
-                      Trip Challenge
+                      {t('card.type')}
                     </p>
 
+                    {/*
+                      기관이 작성한 동적 데이터이므로
+                      현재 단계에서는 원문 그대로 표시한다.
+                    */}
                     <h3 className="mt-2 line-clamp-2 text-xl font-black text-slate-900">
                       {challenge.title}
                     </h3>
 
+                    {/* Challenge 평균 별점 및 후기 개수 */}
+                    <div className="mt-2">
+                      <ChallengeRating
+                        averageRating={challenge.averageRating}
+                        reviewCount={challenge.reviewCount}
+                        variant="card"
+                      />
+                    </div>
+
                     <p className="mt-3 line-clamp-3 min-h-18 text-sm leading-6 text-slate-600">
-                      {challenge.description ?? 'Challenge 설명이 없습니다.'}
+                      {challenge.description ?? t('card.noDescription')}
                     </p>
 
                     <div className="mt-5 rounded-2xl bg-slate-50 p-4">
                       <div className="space-y-2 text-sm text-slate-500">
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold text-slate-400">
-                            시작
+                            {t('card.start')}
                           </span>
 
                           <span className="text-right font-semibold text-slate-700">
-                            {formatDate(challenge.startAt)}
+                            {formatDate(
+                              challenge.startAt,
+                              locale,
+                              t('card.undecidedDate'),
+                            )}
                           </span>
                         </div>
 
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold text-slate-400">
-                            종료
+                            {t('card.end')}
                           </span>
 
                           <span className="text-right font-semibold text-slate-700">
-                            {formatDate(challenge.endAt)}
+                            {formatDate(
+                              challenge.endAt,
+                              locale,
+                              t('card.undecidedDate'),
+                            )}
                           </span>
                         </div>
                       </div>
@@ -235,7 +297,7 @@ export default async function Home() {
                     href={`/challenges/${challenge.id}`}
                     className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-bold text-white transition hover:bg-sky-700"
                   >
-                    <span>Challenge 보기</span>
+                    <span>{t('card.viewChallenge')}</span>
 
                     <span aria-hidden="true">→</span>
                   </Link>

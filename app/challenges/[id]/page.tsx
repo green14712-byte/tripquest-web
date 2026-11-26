@@ -6,6 +6,13 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react'
 
 import ChallengeSummaryMap from '../../components/challenge-summary-map'
 import MissionLocationMap from '../../components/mission-location-map'
+import ChallengeRating from '../../components/challenge-rating'
+
+import BadgeAchievementModal, {
+  hasNewBadgeAward,
+  type ChallengeCompletionResult,
+} from '../../components/badge-achievement-modal'
+
 import { API_BASE_URL } from '../../lib/api'
 
 type VerificationMode = 'LOCATION_ONLY' | 'LOCATION_AND_QR' | 'LOCATION_OR_QR'
@@ -32,6 +39,9 @@ type Challenge = {
   coverPositionY: number
 
   institutionId: number
+
+  averageRating?: number
+  reviewCount?: number
 }
 
 type Mission = {
@@ -88,6 +98,8 @@ type AuthMeResponse = {
 type MissionVerificationResult = {
   message?: string
 
+  challengeCompletion?: ChallengeCompletionResult
+
   verification?: {
     missionId?: number
     challengeId?: number
@@ -98,6 +110,17 @@ type MissionVerificationResult = {
     distanceMeters?: number | null
     allowedRadiusMeters?: number
   }
+}
+
+type MyReviewEligibility = {
+  canWriteReview: boolean
+  canEditReview: boolean
+}
+
+type BadgeAchievementState = {
+  userBadgeId: number
+  badgeVersionId: number
+  accessToken: string
 }
 
 type CompletionPhotoResponse = {
@@ -265,6 +288,11 @@ export default function ChallengeDetailPage() {
 
   const [progress, setProgress] = useState<Progress | null>(null)
 
+  const [reviewRefreshKey, setReviewRefreshKey] = useState(0)
+
+  const [reviewEligibility, setReviewEligibility] =
+    useState<MyReviewEligibility | null>(null)
+
   const [loading, setLoading] = useState(true)
 
   const [progressLoading, setProgressLoading] = useState(false)
@@ -284,6 +312,15 @@ export default function ChallengeDetailPage() {
   const [missionMessages, setMissionMessages] = useState<
     Record<number, string>
   >({})
+
+  /*
+   * 신규 배지 획득 팝업 상태
+   *
+   * 이번 Mission 인증 요청에서 실제 UserBadge가
+   * 발급된 경우에만 상태를 설정한다.
+   */
+  const [badgeAchievement, setBadgeAchievement] =
+    useState<BadgeAchievementState | null>(null)
 
   /*
    * 웹 내부 QR 스캐너
@@ -568,6 +605,96 @@ export default function ChallengeDetailPage() {
 
     void loadPage()
   }, [challengeId, loadProgress])
+
+  /* 기존 후기 API를 기준으로 후기 버튼 문구를 결정한다. */
+  useEffect(() => {
+    setReviewEligibility(null)
+
+    if (!challengeId || currentUser?.role !== 'USER') {
+      return
+    }
+
+    const accessToken = sessionStorage.getItem('accessToken')
+
+    if (!accessToken) {
+      return
+    }
+
+    const controller = new AbortController()
+
+    async function loadReviewEligibility() {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/challenges/${challengeId}/reviews/me`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            cache: 'no-store',
+            signal: controller.signal,
+          },
+        )
+
+        if (!response.ok || controller.signal.aborted) {
+          return
+        }
+
+        const data = (await response.json()) as MyReviewEligibility
+
+        if (!controller.signal.aborted) {
+          setReviewEligibility({
+            canWriteReview: data.canWriteReview === true,
+            canEditReview: data.canEditReview === true,
+          })
+        }
+      } catch {
+        // 후기 작성 권한 조회에 실패해도 공개 후기 열람은 유지한다.
+      }
+    }
+
+    void loadReviewEligibility()
+
+    return () => controller.abort()
+  }, [challengeId, currentUser?.id, currentUser?.role, reviewRefreshKey])
+
+  /* 브라우저 뒤로 가기로 복원된 화면의 별점과 작성 상태를 갱신한다. */
+  useEffect(() => {
+    if (!challengeId) return
+
+    const controller = new AbortController()
+
+    function refreshAfterRestore(event: PageTransitionEvent) {
+      if (!event.persisted) return
+
+      setReviewRefreshKey((current) => current + 1)
+
+      void fetch(`${API_BASE_URL}/challenges/${challengeId}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) return
+          const data = (await response.json()) as ChallengeDetailResponse
+          if (controller.signal.aborted) return
+          setChallenge((current) =>
+            current && current.id === data.challenge.id
+              ? {
+                  ...current,
+                  averageRating: data.challenge.averageRating,
+                  reviewCount: data.challenge.reviewCount,
+                }
+              : current,
+          )
+        })
+        .catch(() => undefined)
+    }
+
+    window.addEventListener('pageshow', refreshAfterRestore)
+    return () => {
+      controller.abort()
+      window.removeEventListener('pageshow', refreshAfterRestore)
+    }
+  }, [challengeId])
 
   async function handleJoin() {
     if (!challengeId) {
@@ -863,6 +990,12 @@ export default function ChallengeDetailPage() {
     }
   }, [qrScannerMissionId, router])
 
+  /*
+   * Mission 위치 인증
+   *
+   * 이번 인증에서 Challenge를 최초 완료하고
+   * 신규 UserBadge를 획득했을 경우 팝업을 표시한다.
+   */
   async function handleLocationVerification(mission: Mission) {
     if (!challengeId) {
       return
@@ -994,6 +1127,38 @@ export default function ChallengeDetailPage() {
         [mission.id]: successMessage,
       }))
 
+      /*
+       * 신규 배지 획득 여부 확인
+       *
+       * 단순 진행률 100%가 아닌 백엔드의
+       * justCompleted 및 badgeAwarded 응답을 기준으로 한다.
+       *
+       * 실제 지급된 UserBadge ID와 BadgeVersion ID를
+       * 공통 배지 획득 팝업에 전달한다.
+       */
+      const challengeCompletion = data?.challengeCompletion
+
+      if (hasNewBadgeAward(challengeCompletion)) {
+        setBadgeAchievement({
+          userBadgeId: challengeCompletion.userBadgeId,
+
+          badgeVersionId: challengeCompletion.badgeVersionId,
+
+          accessToken,
+        })
+      }
+
+      /*
+       * Challenge 최초 완료 후 후기 작성 자격 갱신
+       * 배지 지급 여부와는 별개로 처리한다.
+       */
+      if (challengeCompletion?.justCompleted) {
+        setReviewRefreshKey((current) => current + 1)
+      }
+
+      /*
+       * 기존 진행률 및 Mission 완료사진 갱신
+       */
       await loadProgress(accessToken, challengeId)
     } catch (err) {
       let message: string
@@ -1480,7 +1645,30 @@ export default function ChallengeDetailPage() {
             </div>
           </div>
 
-          <div className="mt-8 w-full lg:mt-0 lg:w-auto lg:min-w-60">
+          <div className="mt-8 w-full shrink-0 lg:mt-0 lg:w-60">
+            {/* 평균 별점과 별도의 여행자 후기 페이지 이동 */}
+            <div className="mb-4 rounded-2xl border border-white/20 bg-black/25 p-5 backdrop-blur">
+              <ChallengeRating
+                averageRating={challenge.averageRating}
+                reviewCount={challenge.reviewCount}
+                variant="hero"
+              />
+
+              <Link
+                href={`/challenges/${challenge.id}/reviews`}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-sky-700 shadow-sm transition hover:bg-sky-50"
+              >
+                {currentUser?.role === 'USER' &&
+                reviewEligibility?.canEditReview
+                  ? '내 후기 수정'
+                  : currentUser?.role === 'USER' &&
+                      reviewEligibility?.canWriteReview
+                    ? '후기 작성'
+                    : '후기 보기'}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+
             {!currentUser ? (
               <Link
                 href="/login"
@@ -1636,6 +1824,7 @@ export default function ChallengeDetailPage() {
           </div>
         </section>
 
+        {/* USER Challenge 진행률 */}
         {currentUser?.role === 'USER' && progress?.joined && (
           <section className="mb-12 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="p-6 sm:p-8">
@@ -1648,6 +1837,7 @@ export default function ChallengeDetailPage() {
                   <div className="mt-2 flex items-end gap-3">
                     <p className="text-3xl font-black text-slate-900 sm:text-4xl">
                       {progress.completedMissionCount}
+
                       <span className="text-lg font-bold text-slate-400">
                         {' '}
                         / {progress.totalMissionCount}
@@ -1787,6 +1977,7 @@ export default function ChallengeDetailPage() {
                         {mission.address && (
                           <p className="mt-5 flex gap-2 text-sm leading-6 text-slate-500">
                             <span aria-hidden="true">📍</span>
+
                             <span>{mission.address}</span>
                           </p>
                         )}
@@ -2125,6 +2316,7 @@ export default function ChallengeDetailPage() {
         </section>
       </div>
 
+      {/* Mission 완료사진 관리 모달 */}
       {completionPhotoModalMission &&
         completionPhotoModalState &&
         completionPhotoModalImage && (
@@ -2268,6 +2460,7 @@ export default function ChallengeDetailPage() {
           </div>
         )}
 
+      {/* QR 스캐너 모달 */}
       {qrScannerMissionId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-8 backdrop-blur-sm">
           <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
@@ -2345,6 +2538,16 @@ export default function ChallengeDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 신규 배지 획득 축하 팝업 */}
+      {badgeAchievement && (
+        <BadgeAchievementModal
+          userBadgeId={badgeAchievement.userBadgeId}
+          badgeVersionId={badgeAchievement.badgeVersionId}
+          accessToken={badgeAchievement.accessToken}
+          onClose={() => setBadgeAchievement(null)}
+        />
       )}
     </main>
   )
